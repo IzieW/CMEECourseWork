@@ -1,12 +1,12 @@
 #!/bin/bash
-pdflatex $1.tex | tr -s
-bibtex $1 | tr -d ".tex"
-pdflatex $1.tex | tr -s
-pdflatex $1.tex | tr -s
-evince $1.pdf & #evince opens document to view
+pdflatex $1
+tr -d $1 ".*" | bibtex $1
+pdflatex $1
+pdflatex $1
+tr -d $1 ".*" | evince $1.pdf &
 
 ## Cleanup
 rm *.aux
 rm *.log
 rm *.bbl
-rm *.blg
+rm *.blg 
