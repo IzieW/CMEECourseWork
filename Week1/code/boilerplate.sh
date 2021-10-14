@@ -5,4 +5,4 @@
 # Arguments: none
 # Date: Oct 2021
 echo -e "\nThis is a shell script! \n" #Where -e enables interpretation of backslash escapes for formatting
-#exit
+#exit..
