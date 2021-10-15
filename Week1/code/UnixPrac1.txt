@@ -2,7 +2,7 @@
 
 #2 tail -n +2 ../data/fasta/E.coli.fasta #Ensure scrollback allows at least 79000 lines to see full content
 
-#3 tail -n +2 ../data/fasta/E.coli.fasta | wc -m
+#3 tail -n +2 ../data/fasta/E.coli.fasta | tr -d "\n" | wc -m
 
 #4 tail -n +2 ../data/fasta/E.coli.fasta | tr -d "\n" | grep -o ATGC | wc -l
 
