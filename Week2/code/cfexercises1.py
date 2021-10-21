@@ -1,4 +1,17 @@
-# What does each of foo_x do?
+#!/usr/bin/env python3
+
+"""New and improved cfexercises1.py modified to make it a module. 
+All the foo_x functions will now take arguments from the user"""
+
+__appname__ = '[cfexercises.py]'
+__author__ = 'Izie Wood (iw121@ic.ac.uk)'
+__version__ = '0.0.1'
+__liscence__ = 'unknown'
+
+## imports ##
+import sys 
+
+## functions ##
 def foo_1(x): # Returns x to the power of 0.05
     return x **0.5 
 
@@ -35,3 +48,16 @@ def foo_6(x): # Calculate the factorial of x in a different way
         facto = facto * x
         x = x -1
     return facto
+
+def main(argv):
+    print(foo_1(2))
+    print(foo_2(1,2))
+    print(foo_3(5,4,3))
+    print(foo_4(4))
+    print(foo_5(4))
+    print(foo_6(4))
+    return 0 
+
+if (__name__ == "__main__"):
+    status = main(sys.argv)
+    sys.exit(status)
