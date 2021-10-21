@@ -9,8 +9,6 @@ __version__ = '0.0.1'
 
 ## imports ## 
 
-import csv # package to manipulate csv
-
 import sys
 
 ## functions ##
