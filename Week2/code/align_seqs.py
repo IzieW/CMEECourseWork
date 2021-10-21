@@ -17,16 +17,15 @@ import sys
 # Read sequences from csv file and append to list 
 with open('../data/Example_seqs.csv', 'r') as f:
     
-    csvread = csv.reader(f) # Iterate over lines in f
     sequences = [] # To be populated by lines in f
-    for row in csvread: 
+    for row in f:
         sequences.append(row)
     
 # Assign sequences to variables
 # Assign the longer sequence s1, and the shorter to s2
 # l1 is length of the longest, l2 that of the shortest
-seq1 = sequences[0][0]
-seq2 = sequences[1][0]
+seq1 = sequences[0]
+seq2 = sequences[1]
 
 l1 = len(seq1)
 l2 = len(seq2)
@@ -73,8 +72,8 @@ def main(argv):
 # Saves best alignment and score to txt file 
     rf = "../results/align_seqs.txt"
     with open(rf, 'w') as r:
-        r.write(my_best_align + '\n')
-        r.write(s1 + '\n')
+        r.write(my_best_align)
+        r.write(s1)
         r.write("Best score: "+ str(my_best_score) + '\n')
     
     print("Best alignment found!\nResults saved to:",rf)
