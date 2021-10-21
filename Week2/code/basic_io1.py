@@ -1,3 +1,8 @@
+# Author: Izie Wood (iw121@ic.ac.uk)
+# Script: basic_io1.py
+# Desc: basic scripts for reading files
+# Arguments: 1 -> text file
+# Date: Oct 2021
 #############################
 # FILE INPUT
 #############################

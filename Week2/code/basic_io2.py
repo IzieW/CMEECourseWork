@@ -1,3 +1,8 @@
+# Author: Izie Wood (iw121@ic.ac.uk)
+# Script: basic_io2.py
+# Desc: Write values from list to text file
+# Arguments: 1 -> text file
+# Date: Oct 2021
 #############################
 # FILE OUTPUT
 #############################

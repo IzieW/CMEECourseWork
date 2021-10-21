@@ -1,3 +1,9 @@
+# Author: Izie Wood (iw121@ic.ac.uk)
+# Script: basic_csv.py
+# Desc: scripts demonstrating reading and writing csv
+# Arguments: 2 -> csv files
+# Date: Oct 2021
+
 import csv
 
 # Read a file containing:
