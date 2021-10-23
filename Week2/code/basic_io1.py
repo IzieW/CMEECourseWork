@@ -1,8 +1,9 @@
-# Author: Izie Wood (iw121@ic.ac.uk)
-# Script: basic_io1.py
-# Desc: basic scripts for reading files
-# Arguments: 1 -> text file
-# Date: Oct 2021
+#!/usr/bin/env Python3
+
+"""Basic script showing how to import objects from file"""
+__author__ = 'Izie Wood (iw121@ic.ac.uk)'
+__version__ = '0.0.1'
+
 #############################
 # FILE INPUT
 #############################

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Some functions exemplifying the use of control statements"""
+"""Exercise using doctest tool to test function from control_flow.py"""
 #docstrings are considered part of the running code (normal comments are #stripped). Hence, you can access your docstrings at run time. 
 
-__appname__ = '[boilerplate.py]'
+__appname__ = '[test_control_flow.py]'
 __author__ = 'Izie Wood (iw121@ic.ac.uk)'
 __version__ = '0.0.1'
 __liscense__ = "License for this code/program"
@@ -15,7 +15,7 @@ import doctest # Import the doctest module
 
 ## functions ##
 def even_or_odd(x=0):
-    """Find whether a number x is even or odd.
+    """Doctest even or odd: Find whether a number x is even or odd.
 
     >>> even_or_odd(10)
     '10 is Even!'

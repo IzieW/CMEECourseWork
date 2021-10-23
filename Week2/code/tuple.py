@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+
+"""Week 2 practical comprehension: Using for loop print 
+each value in tuple"""
+__author__ = 'Izie Wood (iw121@ic.ac.uk)'
+__version__ = '0.0.1'
+
 birds = ( ('Passerculus sandwichensis','Savannah sparrow',18.7),
           ('Delichon urbica','House martin',19),
           ('Junco phaeonotus','Yellow-eyed junco',19.5),

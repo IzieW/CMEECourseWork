@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
-"""Some functions exemplifying the use of control statements"""
-#docstrings are considered part of the running code (normal comments are #stripped). Hence, you can access your docstrings at run time. 
 
-__appname__ = '[boilerplate.py]'
+"""Some functions exemplifying the use of control statements"""
 __author__ = 'Izie Wood (iw121@ic.ac.uk)'
 __version__ = '0.0.1'
-__liscense__ = "License for this code/program"
 
 ## imports ##
 import sys # module to interface our programes with the operating system 
@@ -54,6 +51,7 @@ def find_all_primes(x = 22):
     return allprimes
 
 def main(argv):
+    """Input and print results of functions above"""
     print(even_or_odd(22))
     print(even_or_odd(33))
     print(largest_divisor_five(120))

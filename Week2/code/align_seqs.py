@@ -12,7 +12,7 @@ __version__ = '0.0.1'
 import sys
 
 ## functions ##
-# Read sequences from csv file and append to list 
+# Read sequences from csv file and append to list
 with open('../data/Example_seqs.csv', 'r') as f:
     
     sequences = [] # To be populated by lines in f
@@ -38,6 +38,8 @@ else:
 # A function that computes a score by returning the number of matches starting
 # from arbitrary startpoint (chosen by user)
 def calculate_score(s1, s2, l1, l2, startpoint):
+    """Computes score by returning number of matches between two sequences
+    from starting point of user's choice"""
     matched = "" # to hold string displaying alignements
     score = 0
     for i in range(l2):
@@ -57,7 +59,7 @@ def calculate_score(s1, s2, l1, l2, startpoint):
 
 # now try to find the best match (highest score) for the two sequences
 def main(argv):
-    """main entry point of argument"""    
+    """"Finds and saves best alignment and its score to text file"""   
     my_best_align = None
     my_best_score = -1
 

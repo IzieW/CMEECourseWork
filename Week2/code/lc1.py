@@ -1,8 +1,9 @@
-# Author: Izie Wood
-# Script: lc1.py
-# Desc: Write lists using list comprehensions and conventional loops
-# Arguments: none
-# Date: Oct 2021
+#!/usr/bin/env python3
+
+"""Week 2 practical comprehension: Write list comprehsensions and for loops
+to complete exercises on data set"""
+__author__ = 'Izie Wood (iw121@ic.ac.uk)'
+__version__ = '0.0.1'
 
 birds = ( ('Passerculus sandwichensis','Savannah sparrow',18.7),
           ('Delichon urbica','House martin',19),

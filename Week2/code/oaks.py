@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+
+"""Script illustrating use of for loops versus list comprehsension"""
+__author__ = 'Izie Wood (iw121@ic.ac.uk)'
+__version__ = '0.0.1'
+
+
 taxa = ['Quercus robur', 'Fraxinus excelsior', 'Pinus sylvestris', 'Quercus cerris', 'Quercus petraea']
 
 def is_an_oak(name):

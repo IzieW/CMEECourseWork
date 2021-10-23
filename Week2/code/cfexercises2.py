@@ -1,3 +1,9 @@
+#!/usr/bin/env python3
+
+"""More scripts illustrating use of for loops"""
+__author__ = 'Izie Wood (iw121@ic.ac.uk)'
+__version__ = '0.0.1'
+
 for j in range(12):
     if j % 3 == 0:
         print('hello')

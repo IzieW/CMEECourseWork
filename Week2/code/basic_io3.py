@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+
+"""Script illustrating how to store objects in files and
+later reopen them"""
+__author__ = 'Izie Wood (iw121@ic.ac.uk)'
+__version__ = '0.0.1'
+
 #############################
 # STORING OBJECTS
 #############################

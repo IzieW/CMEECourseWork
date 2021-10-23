@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+
+"""Week 2 practical comprehension: use list comprehsensions and 
+loops to complete excersizes"""
+__author__ = 'Izie Wood (iw121@ic.ac.uk)'
+__version__ = '0.0.1'
+
 # Average UK Rainfall (mm) for 1910 by month
 # http://www.metoffice.gov.uk/climate/uk/datasets
 rainfall = (('JAN',111.4),
