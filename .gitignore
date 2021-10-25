@@ -3,3 +3,4 @@
 sandbox/
 .ignore
 __pycache__
+.Rhistory
