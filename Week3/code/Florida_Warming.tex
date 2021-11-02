@@ -1,0 +1,33 @@
+\documentclass[11pt]{article}
+\usepackage{graphicx}
+\graphicspath{{../results/}}
+
+\begin{document}
+
+\section{Results}
+        There appeared to be a positive correlation between temperature and time, with a 
+        Pearson's correlation coefficient of 0.533. 
+        \begin{figure}[h]
+        \begin{center}
+            \includegraphics[scale=.30]{FloridaPlot}
+            \label{fig}
+        \end{center}
+        \end{figure}
+
+        To see the signficiance of this correlation, we compared the observed correlation
+        coefficient agaisnt a distribution of completely random correlation coefficients, 
+        achieved through reshuffling our data 5000 times. 
+        
+        \begin{figure}[ht]
+        \begin{center}
+            \includegraphics[scale=0.25]{permutationplot}
+        \end{center}
+        \end{figure}
+
+        Out of 5,000 randomely generated correlation coefficients, none of them were 
+        greater than our observed correlation coefficient.
+        Thus, the observed positive correlation between temperature and time has an 
+        approximate asymptotic p-value of 0.00.
+        Florida is getting warmer. 
+
+\end{document}

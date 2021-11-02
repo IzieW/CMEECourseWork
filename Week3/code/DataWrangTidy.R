@@ -5,66 +5,39 @@
 ########## Load tidyverse ###########
 require(tidyverse)
 
-######## Convert the data frame to a "tibble" ########
-# "tibble" is tidyverse equivilent of a data.frame.
-# Modified data frames that make data exploration even easier 
-
-tibble::as_tibble(MyWrangledData) # :: specifys function from package (ensure you are using the intended function)
-
-############# Load the dataset ###############
-# header = false because the raw data don't have real headers
-MyData <- as.matrix(read.csv("../data/PoundHillData.csv", header = FALSE))
+############# Load the data set ###############
+# use readr 
+MyData <- readr::read_csv("../data/PoundHillData.csv", col_names = FALSE) # no headers
 
 # header = true because we do have metadata headers
-MyMetaData <- read.csv("../data/PoundHillMetaData.csv", header = TRUE, sep = ";")
+# read delim to auto detect separation values
+MyMetaData <- readr::read_delim("../data/PoundHillMetaData.csv", col_names=TRUE)
 
-############# Inspect the dataset ###############
-head(MyData)
-dim(MyData)
-str(MyData)
-fix(MyData) #you can also do this
-fix(MyMetaData)
+############# Inspect the data set ###############
+print("Loading data...")
+print("Data:")
+dplyr::glimpse(MyData)
 
+print("Wrangling data..")
 ############# Transpose ###############
 # To get those species into columns and treatments into rows 
-MyData <- t(MyData) 
-head(MyData)
-dim(MyData)
+MyData <- t(MyData)
 
 ############# Replace species absences with zeros ###############
-MyData[MyData == ""] = 0
+MyData <- replace_na(MyData,"0")
 
 ############# Convert raw matrix to data frame ###############
-
-TempData <- as.data.frame(MyData[-1,],stringsAsFactors = F) #stringsAsFactors = F is important!
+TempData <- as.tibble(MyData[-1, ])
 colnames(TempData) <- MyData[1,] # assign column names from original data
 
 ############# Convert from wide to long format  ###############
-require(reshape2) # load the reshape2 package
 
-?melt #check out the melt function
+MyWrangledData <- tidyr::pivot_longer(TempData, 5:45, names_to = "Species", values_to = "Count")
 
-MyWrangledData <- melt(TempData, id=c("Cultivation", "Block", "Plot", "Quadrat"), variable.name = "Species", value.name = "Count")
+MyWrangledData <- mutate(MyWrangledData, Cultivation = as.factor(Cultivation),
+                         Block = as.factor(Block), Plot = as.factor(Plot), 
+                         Quadrat = as.factor(Quadrat), Count = as.integer(Count))
 
-MyWrangledData[, "Cultivation"] <- as.factor(MyWrangledData[, "Cultivation"])
-MyWrangledData[, "Block"] <- as.factor(MyWrangledData[, "Block"])
-MyWrangledData[, "Plot"] <- as.factor(MyWrangledData[, "Plot"])
-MyWrangledData[, "Quadrat"] <- as.factor(MyWrangledData[, "Quadrat"])
-MyWrangledData[, "Count"] <- as.integer(MyWrangledData[, "Count"])
-
-str(MyWrangledData)
-head(MyWrangledData)
-dim(MyWrangledData)
-
-############# Exploring the data (extend the script below)  ###############
-
-########## Load tidyverse ###########
-require(tidyverse)
-
-######## Convert the data frame to a "tibble" ########
-# "tibble" is tidyverse equivilent of a data.frame.
-# Modified data frames that make data exploration even easier 
-
-tibble::as_tibble(MyWrangledData) # :: specifys function from package (ensure you are using the intended function)
-
-########## glimpse data in tidyverse ##########
+print("Wrangled Data:")
+dplyr::glimpse(MyWrangledData)
+print(MyWrangledData)

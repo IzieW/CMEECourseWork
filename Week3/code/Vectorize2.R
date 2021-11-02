@@ -41,7 +41,7 @@ stochrickvect <- function(p0 = runif(1000, .5, 1.5), r = 1.2, K = 1, sigma = 0.2
   N[1, ] <- p0 #populate row 1 with random numbers from P0, aka population 0 
 
   for (yr in 2:numyears) { #loop through the populations
-      N[yr,] <- N[yr-1,] * exp(r * (1 - N[yr - 1,] / K) + rnorm(1, 0, sigma)) # add one fluctuation from normal distribution
+      N[yr,] <- N[yr-1,] * exp(r * (1 - N[yr - 1,] / K) + rnorm(1000, 0, sigma)) # add one fluctuation from normal distribution
      }
 
  return(N)
