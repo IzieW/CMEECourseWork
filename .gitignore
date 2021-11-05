@@ -4,5 +4,5 @@ sandbox/
 .ignore
 __pycache__
 .Rhistory
-.Rdata
-.R*
+.RData
+.Rhistory
