@@ -3,6 +3,8 @@
 # Desc: Script illustrating mathematical annotation on an axis and plot area 
 # Date: Nov 2021
 
+require(tidyverse)
+
 # create some linear regression "data 
 x <- seq(0, 100, by = 0.1)
 y <- -4 + 0.25 * x +

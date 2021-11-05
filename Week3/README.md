@@ -10,6 +10,7 @@ All code in this repository was written in R 4.1.1, apart from one file (Florida
 
 ## Dependencies 
 Tidyverse
+maps
 
 ### Project structure and usage 
 Respository contains three directories: 'code', 'data', 'results'. All scripts and code files are located in code. Appropriate files for which to run scripts on can be found in 'data'. In an ideal world, all results will be sent to results...

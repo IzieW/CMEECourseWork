@@ -4,6 +4,7 @@
 # Arguments: none
 # Date: Nov 2021
 
+require(tidyverse)
 ####### Function to calculate the ellipse ########
 build_ellipse <- function(hradius, vradius){
   npoints = 250

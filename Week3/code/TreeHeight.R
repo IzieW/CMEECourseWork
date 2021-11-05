@@ -20,15 +20,15 @@ CSTree <- (read.csv("../data/trees.csv")) # pun of csv
 # degrees: The angle of elevation of the tree
 # distance: The distance from the base of the tree (e.g., meters)
 
-TreeHeight <- function(degrees, distance){
-    radians <- degrees * pi / 180
+TreeHeight <- function(degrees, distance){ #calculates tree height
+    radians <- degrees * pi / 180 
     height <- distance * tan(radians)
     return(height)
 }
 
 # Use above function for each row in data frame, save to vector
 l <- length(CSTree[,1]) # column length/row numbers
-Col4 <- vector(,l) # preallocate vector size
+Col4 <- vector(,l) # preallocate vector 
 for (i in 1:l){
     TreeHts <- TreeHeight(CSTree[i,3], CSTree[i,2]) # Input degree/distance from dataframe
     Col4[i] <- TreeHts

@@ -22,7 +22,7 @@ p <- ggplot(MyDF, aes(x = Prey.mass,
                       y = Predator.mass, 
                       colour = Predator.lifestage))
 
-p <- p + geom_point(size=I(2), shape=I(3)) + # specify plot and shapes
+p <- p + geom_point(size=I(1), shape=I(3)) + # specify plot and shapes
   theme_bw() + #make background white
   theme(aspect.ratio = 2.5/5.5, #set plot sizing
         panel.border = element_rect(colour = "grey45")) # set panel colour to grey

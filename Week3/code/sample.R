@@ -1,4 +1,7 @@
-######## Functions #########
+#!/usr/bin/Rscript --vanilla
+# Author: Izie Wood
+# Desc: Script demonstrating different types of vectorisation using a sampling experiment
+# Date: Oct 2021
 
 ## A function to take a sample size of n from a population "popn" and return its mean 
 myexperiment <- function(popn,n){

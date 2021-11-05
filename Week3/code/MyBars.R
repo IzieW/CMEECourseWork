@@ -3,6 +3,10 @@
 # Desc: Annotate plot in ggplot2 excersize 
 # Date: Nov 2021
 
+require(tidyverse)
+
+a <- read.table("../data/Results.txt", header = TRUE) #load data
+
 a$ymin <- rep(0, dim(a)[1]) # append a column of zeros 
 
 # Print the first linerange 

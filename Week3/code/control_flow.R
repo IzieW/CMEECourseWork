@@ -1,3 +1,8 @@
+#!/usr/bin/Rscript --vanilla 
+# Author: Izie Wood (iw121@ic.ac.uk)
+# Desc: Simple script illustrating control functions in R 
+# Date: Oct 2021
+
 a <- TRUE
 if (a == TRUE){
     print ("a is TRUE")

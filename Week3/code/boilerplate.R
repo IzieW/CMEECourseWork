@@ -1,4 +1,7 @@
-# A boilerplate R script
+#!/usr/bin/Rscript --vanilla 
+# Author: Izie Wood (iw121@ic.ac.uk)
+# Desc: A boilerplate Rscript
+# Date: Oct 2021
 
 MyFunction <- function(Arg1, Arg2){
 

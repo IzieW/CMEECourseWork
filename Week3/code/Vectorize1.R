@@ -1,3 +1,8 @@
+#!/usr/bin/Rscript --vanilla
+# Author: Izie Wood
+# Desc: Script demonstrating time taken for vectorized vs. non-vectorized functions
+# Date: Oct 2021
+
 M <- matrix(runif(1000000),1000,1000)
 
 sumALLElements <- function(M){

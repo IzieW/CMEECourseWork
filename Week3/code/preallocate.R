@@ -1,3 +1,8 @@
+#!/usr/bin/Rscript --vanilla
+# Author: Izie Wood
+# Desc: Script demonstrating time taken to run functions with and without preallocating the vectors
+# Date: Oct 2021
+
 NoPreallocFun <- function(x){
     a <- vector() # empty vector
     for (i in 1:x) {

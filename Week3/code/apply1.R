@@ -1,3 +1,8 @@
+#!/usr/bin/Rscript --vanilla
+# Author: Izie Wood
+# Desc: Script demonstrating use of apply
+# Date: Oct 2021
+
 ## Build a random matrix 
 M <- matrix(rnorm(100), 10, 10)
 
