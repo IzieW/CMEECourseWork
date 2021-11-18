@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+__author__ = "Izie Wood (iw121@ic.ac.uk)"
+"""Script to run TestR.R in python. Saves results to file"""
 
 import subprocess
 

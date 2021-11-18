@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+"""Script demonstrating time taken to run loops versus join"""
+
+__author__ = "Izie Wood (iw121@ic.ac.uk)"
 #########################################################
 # loops vs. np.array comprehsensions: which is faster?
 #########################################################
@@ -18,3 +22,4 @@ mystring = "my string"
 from profileme import my_join as my_join_join
 
 from profileme2 import my_join as my_join
+

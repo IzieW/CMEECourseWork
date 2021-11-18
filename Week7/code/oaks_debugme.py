@@ -1,5 +1,5 @@
 #!/usr/bin/env Python3 
-""" Optimised oaks_debugme.py script using doctest """
+""" Optimised oaks_debugme.py script using doctest. Correct Oaks function to accomodate potential mistypes and typoes"""
 __author__ = '{Izie Wood (iw121@ic.ac.uk)'
 
 ############# imports ###########
@@ -22,6 +22,7 @@ def oak_similarity(a):
     return SequenceMatcher(None, a.lower(), "quercus").ratio() #return similarity of two strings in ratio of similarity
 
 def main(argv): 
+    """Load data from CSV, return Oaks in new CSV"""
     f = open('../data/TestOaksData.csv','r')
     g = open('../data/JustOaksData.csv','w')
     taxa = csv.reader(f)
@@ -31,10 +32,10 @@ def main(argv):
         print(row)
         print ("The genus is: ")
         print(row[0] + '\n')
-        if oak_similarity(row[0]) == 1.0:
+        if oak_similarity(row[0]) == 1.0: # if names are identical, Oak found
             print("FOUND AN OAK!")
             csvwrite.writerow([row[0], row[1]])
-        elif oak_similarity(row[0]) >= 0.8:
+        elif oak_similarity(row[0]) >= 0.8: # if name sufficiently similar, flag potential typos
             print("Possible oak detected- Check for spelling")
 
     return 0
@@ -42,4 +43,4 @@ def main(argv):
 if (__name__ == "__main__"):
     status = main(sys.argv)
 
-doctest.testmod()
+doctest.testmod() #doctstrings
