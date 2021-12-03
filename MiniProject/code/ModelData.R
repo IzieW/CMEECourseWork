@@ -1,40 +1,43 @@
 ########################### Mini Project #############################
-##################### Workflow 2/4: Fits models ######################
+##################### Workflow 3/4: Fits models ######################
 
 #!/usr/bin/Rscript --vanilla 
 # Author: Izie Wood (iw121@ic.ac.uk)
 # Date: Nov 2021
 # Arguments <- none 
-# Desc: Fits models and calculates AIC
-
-################ Imports ################
-require(tidyverse)
+# Desc: Fits linear models and calculates AIC
 
 ############### Load Data ###############
 Data <- read.csv("../results/PreparedLogisticGrowthData.csv", stringsAsFactors = TRUE)
 
-############## Functions #################
+Data$LogPopBio <- log(Data$PopBio) #Log Transform PopBio
+
 IDs <- unique(Data$ID) # Save population IDs to vector
 
+############## Fit linear ################
 # Fits quadratic model for x data set, returns AIC
-FitQuaModel <- function(x){
+Fit_Quadratic <- function(x){
   Popq <- Data %>% filter(ID == x) #Isolate population with select ID from Data
-  QuaModel <- lm(PopBio ~ poly(Time, 2), data = Popq) #fit quadratic model to population
+  QuaModel <- lm(LogPopBio ~ poly(Time, 2), data = Popq) #fit quadratic model to population
   return(AIC(QuaModel)) # Calculate IC
 }
 # Fits Cubic model for x data set, returns AIC
-FitCubModel <- function(x){
+Fit_Cubic <- function(x){
   Popc <- Data %>% filter(ID == x) # Isolate population
-  CubModel <- lm(PopBio ~ poly(Time, 3), data = Popc)
+  CubModel <- lm(LogPopBio ~ poly(Time, 3), data = Popc)
   return(AIC(CubModel))
 }
 
-# Fit quadratic model to each population in Data 
-QuaModel_AIC <- sapply(IDs, FUN = FitQuaModel) # fit quadratic model to each population
-CubModel_AIC <- sapply(IDs, FUN = FitCubModel) # fit Cubic model to each Population
+# fit models to each dataset
+Quadratic_AIC <- sapply(IDs, FUN = Fit_Quadratic) # fit quadratic model to each population
+Cubic_AIC <- sapply(IDs, FUN = Fit_Cubic) # fit Cubic model to each Population
 
-# Save results to tibble
-Models_AIC <- bind_cols(ID = IDs, QuaModel = QuaModel_AIC, CubModel = CubModel_AIC) # combines vectors
+# Add IDs 
+Quadratic_best_fit <- bind_cols(ID = IDs, Model = "Quadratic", AIC = Quadratic_AIC)
+Cubic_best_fit <- bind_cols(ID = IDs, Model = "Cubic", AIC = Cubic_AIC)
 
+
+#################### return results ##############
 # Save results to CSV
-write.csv(Models_AIC, "../results/Models_AIC.csv")
+write.csv(Cubic_best_fit, "../results/Cubic.csv")
+write.csv(Quadratic_best_fit, "../results/Quadratic.csv")
