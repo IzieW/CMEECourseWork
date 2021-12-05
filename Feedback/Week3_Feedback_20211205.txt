@@ -1,0 +1,1943 @@
+Starting code feedback for Izie, Week3
+
+Current Points = 100
+
+Note that: 
+(1) Major sections begin with a double "====" line 
+(2) Subsections begin with a single "====" line 
+(3) Code output or text file content are printed within single "*****" lines 
+
+======================================================================
+======================================================================
+Your Git repo size this week is about 23.48 MiB on disk 
+
+PART 1: Checking project workflow...
+
+Found the following directories in parent directory: Week1, Week7, Week2, .git, Week3, MiniProject, Feedback
+
+Found the following files in parent directory: .gitignore, README.md
+
+Checking for key files in parent directory...
+
+Found .gitignore in parent directory, great! 
+
+Printing contents of .gitignore:
+
+**********************************************************************
+*~ 
+*.tmp
+sandbox/
+.ignore
+__pycache__
+.Rhistory
+.RData
+.Rhistory
+Week4/
+Week5/
+Week6/
+venv
+venv
+.idea/
+.ipynb_checkpoints/
+**********************************************************************
+
+Found README in parent directory, named: README.md
+
+Printing contents of README.md:
+
+**********************************************************************
+My CMEE Coursework Repository
+
+**********************************************************************
+
+======================================================================
+Looking for the weekly directories...
+
+Found 4 weekly directories: Week1, Week2, Week3, Week7
+
+The Week3 directory will be assessed 
+
+======================================================================
+======================================================================
+PART 2: Checking weekly code and workflow...
+
+======================================================================
+Assessing WEEK3...
+
+Found the following directories: code, data, results
+
+Found the following files: README.md
+
+Checking for readme file in weekly directory...
+
+Found README in parent directory, named: README.md
+
+Printing contents of README.md:
+
+**********************************************************************
+# CMEE Coursework, Week 3
+
+This repository contains all of Izie's CMEE Coursework for Week3, Biological Computing in R. 
+
+As guided by TheMulQuaBio, the files in this repository contain responses to practicals in from chapters "Biological Computing in R" and "Data Management and Visualisation" (linked: https://mhasoba.github.io/TheMulQuaBio/notebooks/)
+
+
+## Languages
+All code in this repository was written in R 4.1.1, apart from one file (Florida_Warming.tex) which is written in LaTeX. 
+
+## Dependencies 
+Tidyverse
+maps
+
+### Project structure and usage 
+Respository contains three directories: 'code', 'data', 'results'. All scripts and code files are located in code. Appropriate files for which to run scripts on can be found in 'data'. In an ideal world, all results will be sent to results...
+
+'Code' contains a series of R scripts, which can be run from the bash command line, or from within R.
+
+#### Author name and contact
+ Izie Wood
+ iw121@ic.ac.uk
+
+**********************************************************************
+
+Results directory is empty - good! 
+
+Found 26 code files: PP_Dists.R, plotLin.R, DataWrangTidy.R, PP_Regress.R, Girko.R, Ricker.R, Florida_Warming.R, R_conditionals.R, GPDD_Data.R, apply2.R, apply1.R, Florida_Warming.tex, try.R, break.R, DataWrang.R, Vectorize2.R, sample.R, TreeHeight.R, MyBars.R, preallocate.R, next.R, basic_io.R, control_flow.R, browse.R, boilerplate.R, Vectorize1.R
+
+======================================================================
+Testing script/code files...
+
+======================================================================
+Inspecting script file PP_Dists.R...
+
+File contents are:
+
+**********************************************************************
+#!/usr/bin/Rscript -vanilla 
+# Author: Izie Wood (iw121@ic.ac.uk)
+# Desc: Plots and saves three figures to files:
+#         Distribution of Predator Mass by feeding interaction
+#         Distribution of Prey Mass by feeding interaction
+#         Distribution of Prey Mass/Predator Mass ratio by feeding interaction
+#       and saves mean and median of each to a csv. 
+# Arguments <- none 
+# Date: Nov 2021
+
+########## Load tidyverse ##########
+require(tidyverse)
+
+############ Load data #############
+MyDF <- read.csv("../data/EcolArchives-E089-51-D1.csv")
+MyDF <- mutate(MyDF, Type.of.feeding.interaction = 
+                 as.factor(Type.of.feeding.interaction)) #set to factor
+
+########### Vectors ###########
+interaction.type <- unique(MyDF$Type.of.feeding.interaction) # save feeding types to vector
+
+colour <- seq(1,20,1) # colour bank 
+
+#### Predator mass distribution by feeding interaction ####
+PredHist <- function(i){ 
+  DFi <- filter(MyDF, Type.of.feeding.interaction == i)
+  hist(log10(DFi$Predator.mass), xlab = "log10(Predator.mass (g))",
+       main= i, col = sample(colour,1), breaks = 15)
+}
+
+pdf("../results/Pred_Subplots.pdf", 11.7, 8.3) # open file 
+
+par(mfrow=c(3,2)) # create subplots 
+
+sapply(interaction.type, FUN = PredHist)# apply plotting function to interaction types
+
+graphics.off() # close file
+
+#### Prey mass distribution by feeding interaction ####
+PreyHist <- function(i){ 
+  DFi <- filter(MyDF, Type.of.feeding.interaction == i)
+  hist(log10(DFi$Prey.mass), xlab = "log10(Prey.Mass (g))",
+       main= i, col = sample(colour,1), breaks = 15) # sample from colour bank quicker than rnorm
+} 
+
+pdf("../results/Prey_Subplots.pdf", 11.7, 8.3) # open file 
+
+par(mfrow=c(3,2)) # create subplots 
+
+sapply(interaction.type, FUN = PreyHist)# apply plotting function to interaction types
+
+graphics.off() # close file
+
+##### Prey/Predator Mass ratio distribution by feeding interaction #####
+
+### calculate size ratios and save to vector
+Size.ratio <- vector("numeric", length(MyDF$Prey.mass)) # pre-allocate
+
+ratio <- function(i){ # function to calculate size ratio
+ MyDF$Prey.mass[i]/MyDF$Predator.mass[i]
+}
+
+Size.ratio <- sapply(1:length(MyDF$Prey.mass), function(i) ratio(i)) #apply function for each row in MyDF
+
+### add ratios to data frame 
+
+DFs <- data.frame(MyDF, Size.ratio)
+
+### plot 
+RatioHist <- function(i){ 
+  DFi <- filter(DFs, Type.of.feeding.interaction == i)
+  hist(log10(DFi$Size.ratio), xlab = "log10(Size.ratio (g))",
+       main= i, col = sample(colour,1), breaks = 15) # sample from colour bank quicker than rnorm
+} 
+
+pdf("../results/SizeRatio_Subplots.pdf", 11.7, 8.3) # open file 
+
+par(mfrow=c(3,2))
+
+sapply(interaction.type, FUN=RatioHist)
+
+graphics.off() # close file
+
+########### CSV mean, median ###########
+
+DFV <- data.frame(DFs$Type.of.feeding.interaction, DFs$Predator.mass, 
+                  DFs$Prey.mass, DFs$Size.ratio) # Isolate columns
+colnames(DFV) <- noquote(c("Type.of.feeding.interaction",
+                           "Predator.mass", "Prey.mass", "Size.ratio")) # save without quotation
+
+# calculate mean, median for samples per interaction type
+# and save to DF 
+MMDF <- function(i, n){
+  DFi <- filter(DFV, Type.of.feeding.interaction == i)
+  Mean <- mean(DFi[[n]])
+  Median <- median(DFi[[n]])
+  Type.of.feeding.interaction <- i 
+  Sample <- colnames(DFi[n])
+  if (n == 2 & i == "predacious/piscivorous"){ # for first run, make new DF
+    mainDF <<- data.frame(Sample, Type.of.feeding.interaction, Mean, Median)
+  } else { #then, append to existing DF
+  DFn <- data.frame(Sample, Type.of.feeding.interaction, Mean, Median)
+  mainDF <<- rbind(mainDF, DFn)
+  }
+} 
+# Apply function to interaction types, repeat for numbers 2, 3, 4
+for (n in 2:4){
+  sapply(interaction.type, FUN=MMDF, n)
+}
+
+# Save results to csv
+write.csv(mainDF, "../results/PP_Results.csv")
+**********************************************************************
+
+Testing PP_Dists.R...
+
+Output (only first 500 characters): 
+
+
+**********************************************************************
+         [,1]                       [,2]                      
+breaks   Numeric,17                 Numeric,18                
+counts   Integer,16                 Integer,17                
+density  Numeric,16                 Numeric,17                
+mids     Numeric,16                 Numeric,17                
+xname    "log10(DFi$Predator.mass)" "log10(DFi$Predator.mass)"
+equidist TRUE                       TRUE                      
+         [,3]                       [,4]                    
+**********************************************************************
+
+Encountered error (or warning):
+Loading required package: tidyverse
+── Attaching packages ─────────────────────────────────────── tidyverse 1.2.1 ──
+✔ ggplot2 2.2.1       ✔ purrr   0.3.2  
+✔ tibble  2.1.1       ✔ dplyr   0.8.0.1
+✔ tidyr   0.8.3       ✔ stringr 1.2.0  
+✔ readr   1.3.1       ✔ forcats 0.4.0  
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+
+======================================================================
+Inspecting script file plotLin.R...
+
+File contents are:
+
+**********************************************************************
+#!/usr/bin/Rscript --vanilla
+# Author: Izie Wood
+# Desc: Script illustrating mathematical annotation on an axis and plot area 
+# Date: Nov 2021
+
+require(tidyverse)
+
+# create some linear regression "data 
+x <- seq(0, 100, by = 0.1)
+y <- -4 + 0.25 * x +
+  rnorm(length(x), mean = 0, sd= 2.5)
+
+# save to data frame
+my_data <- data.frame(x=x, y=y)
+
+# perform a linear regression 
+
+my_lm <- summary(lm(y ~ x, data = my_data))
+
+# plot data 
+
+p <- ggplot(my_data, aes(x = x, y = y, 
+                         colour = abs(my_lm$residual))
+            ) +
+  geom_point() +
+  scale_colour_gradient(low = "black", high = "red") + 
+  theme(legend.position = "none") + 
+  scale_x_continuous(
+    expression(alpha^2 * pi / beta * sqrt(Theta)))
+
+# add the regression line 
+p <- p + geom_abline(
+  intercept = my_lm$coefficients[1][1],
+  slope = my_lm$coefficients[2][1],
+  colour = "red")
+
+#throw some math on the plot 
+p <- p + geom_text(aes(x = 60, y = 0,
+                   label = "sqrt(alpha) * 2*pi"),
+                    parse = TRUE, size = 6, 
+                    colour = "blue")
+p
+
+# save to pdf 
+pdf("../results/MyLinReg.pdf")
+print(p)
+dev.off()
+**********************************************************************
+
+Testing plotLin.R...
+
+Output (only first 500 characters): 
+
+
+**********************************************************************
+pdf 
+  2 
+
+**********************************************************************
+
+Encountered error (or warning):
+Loading required package: tidyverse
+── Attaching packages ─────────────────────────────────────── tidyverse 1.2.1 ──
+✔ ggplot2 2.2.1       ✔ purrr   0.3.2  
+✔ tibble  2.1.1       ✔ dplyr   0.8.0.1
+✔ tidyr   0.8.3       ✔ stringr 1.2.0  
+✔ readr   1.3.1       ✔ forcats 0.4.0  
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+
+======================================================================
+Inspecting script file DataWrangTidy.R...
+
+File contents are:
+
+**********************************************************************
+#!/usr/bin/Rscript --vanilla
+# Author: Izie Wood (iw121@ic.ac.uk)
+# Desc: Script wrangles data using tidyverse
+# Date: Oct 2021
+
+################################################################
+################## Wrangling the Pound Hill Dataset in Tidyverse ############
+################################################################
+
+########## Load tidyverse ###########
+require(tidyverse)
+
+############# Load the data set ###############
+# use readr 
+MyData <- readr::read_csv("../data/PoundHillData.csv", col_names = FALSE) # no headers
+
+# header = true because we do have metadata headers
+# read delim to auto detect separation values
+MyMetaData <- readr::read_delim("../data/PoundHillMetaData.csv", col_names=TRUE)
+
+############# Inspect the data set ###############
+print("Loading data...")
+print("Data:")
+dplyr::glimpse(MyData)
+
+print("Wrangling data..")
+############# Transpose ###############
+# To get those species into columns and treatments into rows 
+MyData <- t(MyData)
+
+############# Replace species absences with zeros ###############
+MyData <- replace_na(MyData,"0")
+
+############# Convert raw matrix to data frame ###############
+TempData <- as.tibble(MyData[-1, ])
+colnames(TempData) <- MyData[1,] # assign column names from original data
+
+############# Convert from wide to long format  ###############
+
+MyWrangledData <- tidyr::pivot_longer(TempData, 5:45, names_to = "Species", values_to = "Count")
+
+MyWrangledData <- mutate(MyWrangledData, Cultivation = as.factor(Cultivation),
+                         Block = as.factor(Block), Plot = as.factor(Plot), 
+                         Quadrat = as.factor(Quadrat), Count = as.integer(Count))
+
+print("Wrangled Data:")
+dplyr::glimpse(MyWrangledData)
+print(MyWrangledData)
+
+**********************************************************************
+
+Testing DataWrangTidy.R...
+
+Output (only first 500 characters): 
+
+
+**********************************************************************
+
+**********************************************************************
+
+Encountered error (or warning):
+Loading required package: tidyverse
+── Attaching packages ─────────────────────────────────────── tidyverse 1.2.1 ──
+✔ ggplot2 2.2.1       ✔ purrr   0.3.2  
+✔ tibble  2.1.1       ✔ dplyr   0.8.0.1
+✔ tidyr   0.8.3       ✔ stringr 1.2.0  
+✔ readr   1.3.1       ✔ forcats 0.4.0  
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+Parsed with column specification:
+cols(
+  .default = col_character()
+)
+See spec(...) for full column specifications.
+Error in readr::read_delim("../data/PoundHillMetaData.csv", col_names = TRUE) : 
+  argument "delim" is missing, with no default
+Execution halted
+
+======================================================================
+Inspecting script file PP_Regress.R...
+
+File contents are:
+
+**********************************************************************
+#!/usr/bin/Rscript --vanilla 
+# Author: Izie Wood (iw121@ic.ac.uk)
+# Desc: Plots and saves regression lines to pdf
+# Saves regression results to csv
+# Date: Nov 2021
+
+############### Load packages ##############
+require(ggplot2)
+require(tidyverse)
+
+################ Load data #################
+MyDF <- read.csv("../data/EcolArchives-E089-51-D1.csv")
+
+# set factors
+MyDF <- mutate(MyDF, Type.of.feeding.interaction = 
+                 as.factor(Type.of.feeding.interaction),
+               Predator.lifestage = as.factor(Predator.lifestage))
+
+################ Plot figures ###############
+# specify data and aesthetics
+p <- ggplot(MyDF, aes(x = Prey.mass, 
+                      y = Predator.mass, 
+                      colour = Predator.lifestage))
+
+p <- p + geom_point(size=I(1), shape=I(3)) + # specify plot and shapes
+  theme_bw() + #make background white
+  theme(aspect.ratio = 2.5/5.5, #set plot sizing
+        panel.border = element_rect(colour = "grey45")) # set panel colour to grey
+
+# specify axes, set scale to log10
+p <- p + scale_x_continuous(name = "Prey mass in grams",
+                            trans = 'log10') + 
+        scale_y_continuous(name = "Predator mass in grams",
+                           trans = 'log10')
+
+# add facets for every feeding interaction
+p <- p + facet_grid(Type.of.feeding.interaction ~ .) + # ~ . spreads values down rows
+          theme(strip.text = element_text(size = 7)) # adjust strip text size
+# add regression lines 
+p <- p + geom_smooth(method = lm, fullrange = TRUE, 
+                     size = I(0.5))
+
+# adjust legend 
+p <- p + theme(legend.position = "bottom", # place on bottom
+          legend.title=element_text(size=8, face="bold")) + 
+          guides(color = guide_legend(nrow = 1)) + # make legend single row
+          theme(legend.key.size = unit(0.5, 'cm'), legend.text = element_text(size = 8),
+          legend.spacing.x = unit(0.05, 'cm')) #adjust size
+
+## save to pdf 
+pdf("../results/PP_Regress.pdf")
+print(p)
+dev.off()
+
+################## Calculate regression results ################
+## group data 
+t <- MyDF %>% nest(data = -Type.of.feeding.interaction) %>% # create nest of all data minus feeding interaction, grouped by type of feeding interaction
+mutate(data = map(data, ~.x %>% nest(data = -Predator.lifestage))) # create nest within feeding interaction, grouped by predator lifestage
+
+d <- t %>% unnest() # remove first nest- output is data grouped by both factors
+
+# perform linear model for each group in d 
+regress <- d %>% mutate( fit = map(data, ~lm(Prey.mass ~ Predator.mass, data = .x)),#apply lm() to each value in grouped data
+                         tidied = map(fit, broom::tidy),
+                         glance = map(fit, broom::glance)) #tidy and glance to clean up output of lm
+
+### Gather results for table 
+coef <- regress %>% unnest(tidied) %>% select(term, estimate) %>% #select coefficients
+  pivot_wider(names_from = term, values_from = estimate) %>% #reshape data
+  unnest() 
+
+colnames(coef) <- c("intercept", "slope") #rename columns
+
+g <- regress %>% unnest(glance) %>% select(r.squared, F.value = statistic, p.value) # select statistical tests
+
+df_regress <- bind_cols(regress[,1:2], coef, g) #bind columns into table
+
+### save results to csv
+write.csv(df_regress, "../results/PP_Regress_Results.csv")
+
+
+
+
+
+**********************************************************************
+
+Testing PP_Regress.R...
+
+Output (only first 500 characters): 
+
+
+**********************************************************************
+
+**********************************************************************
+
+Encountered error (or warning):
+Loading required package: ggplot2
+Loading required package: tidyverse
+── Attaching packages ─────────────────────────────────────── tidyverse 1.2.1 ──
+✔ tibble  2.1.1       ✔ purrr   0.3.2  
+✔ tidyr   0.8.3       ✔ dplyr   0.8.0.1
+✔ readr   1.3.1       ✔ stringr 1.2.0  
+✔ tibble  2.1.1       ✔ forcats 0.4.0  
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+Error in library.dynam(lib, package, package.lib) : 
+  shared object ‘reshape2.so’ not found
+Calls: print ... tryCatch -> tryCatchList -> tryCatchOne -> <Anonymous>
+In addition: Warning message:
+S3 methods ‘melt.array’, ‘melt.data.frame’, ‘melt.default’, ‘melt.list’, ‘melt.matrix’, ‘melt.table’ were declared in NAMESPACE but not found 
+Execution halted
+
+======================================================================
+Inspecting script file Girko.R...
+
+File contents are:
+
+**********************************************************************
+#!/usr/bin/Rscript --vanilla 
+# Author: Izie Wood (iw121@ic.ac.uk)
+# Desc: Script plots Girko's law simulation 
+# Arguments: none
+# Date: Nov 2021
+
+require(tidyverse)
+####### Function to calculate the ellipse ########
+build_ellipse <- function(hradius, vradius){
+  npoints = 250
+  a <- seq(0, 2 * pi, length = npoints + 1)
+  x <- hradius * cos(a)
+  y <- vradius * sin(a)
+  return(data.frame(x = x, y = y)) # returns ellipse
+}
+
+####### Build matrix and find values #########
+N <- 250 # Assign size of matrix 
+
+M <- matrix(rnorm(N * N), N, N) # Build matrix 
+
+eigvals <- eigen(M)$values #Find the eigenvalues
+
+eigDF <- data.frame("Real" = Re(eigvals), "Imaginary" = Im(eigvals)) # build a dataframe
+
+my_radius <- sqrt(N)
+
+ellDF <- build_ellipse(my_radius, my_radius) # Dataframe to plot ellipse
+
+names(ellDF) <- c("Real", "Imaginary") # rename columns
+
+################ Plot ellipse #################
+# Plot the eigenvalues
+p <- ggplot(eigDF, aes(x = Real, y = Imaginary))
+p <- p + 
+  geom_point(shape = I(3)) + 
+  theme(legend.position = "none")
+
+# now add the vertical and horizontal line
+p <- p + geom_hline(aes(yintercept = 0))
+p <- p + geom_vline(aes(xintercept = 0))
+
+# finally, add the ellipse 
+p <- p + geom_polygon(data = ellDF, aes(x = Real, y = Imaginary,
+                                        alpha = 1/20, fill = "red"))
+p
+############# save plot to pdf ##############
+pdf("../results/Girko.pdf")
+print(p)
+dev.off() # close file
+
+
+
+**********************************************************************
+
+Testing Girko.R...
+
+Output (only first 500 characters): 
+
+
+**********************************************************************
+pdf 
+  2 
+
+**********************************************************************
+
+Encountered error (or warning):
+Loading required package: tidyverse
+── Attaching packages ─────────────────────────────────────── tidyverse 1.2.1 ──
+✔ ggplot2 2.2.1       ✔ purrr   0.3.2  
+✔ tibble  2.1.1       ✔ dplyr   0.8.0.1
+✔ tidyr   0.8.3       ✔ stringr 1.2.0  
+✔ readr   1.3.1       ✔ forcats 0.4.0  
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+
+======================================================================
+Inspecting script file Ricker.R...
+
+File contents are:
+
+**********************************************************************
+#!/usr/bin/Rscript --vanilla
+# Author: Izie Wood
+# Desc: Script runs simulation of Ricker model
+# Returns a vector of generations
+# Date: Oct 2021
+
+Ricker <- function(N0=1, r=1, K=10, generations=50){
+    
+    # Runs a simulation of the Ricker model
+    # Returns a vector of length generations
+
+    N <- rep(NA, generations) # Creates a vector of NA
+
+    N[1] <- N0
+    for (t in 2:generations)
+    {
+        N[t] <- N[t-1] * exp(r*(1.0 - (N[t-1]/K)))
+    }
+    return (N)
+}
+
+plot(Ricker(generations=10), type="l")
+**********************************************************************
+
+Testing Ricker.R...
+
+Output (only first 500 characters): 
+
+
+**********************************************************************
+
+**********************************************************************
+
+Code ran without errors
+
+Time consumed = 0.11015s
+
+======================================================================
+Inspecting script file Florida_Warming.R...
+
+File contents are:
+
+**********************************************************************
+#!/usr/bin/Rscript --vanilla 
+# Author: Izie Wood (iw121@ic.ac.uk)
+# Script: Florida.R
+# Desc: Script calculating and presenting correlation coefficient between
+# temperatures measured in the Florida Keys over the last century, to answer
+# question: Is Florida getting warmer?
+# 
+# Date: Oct 2021
+
+######### Open data set ##########
+
+load("../data/KeyWestAnnualMeanTemperature.RData", verbose= TRUE) # ats
+
+
+### Plot data ###
+# save to pdf
+
+pdf("../results/FloridaPlot.pdf", 11.7, 8.3)
+plot(ats, xlab = "Years", ylab = "Temperature C", 
+     main = "Key West temperatures over time",
+     cex.lab = 1.5, cex.main = 1.5)
+graphics.off()
+
+
+### Calculate correlation coefficient of observed data 
+Observed.Cor <- cor(ats$Year, ats$Temp) # Default Pearson's correlation coefficient
+
+###### Conduct permutation analysis #######
+# Compare correlation coefficient of observed data set against
+# truly random distribution of correlation coefficients. 
+
+num <- 5000 # number of permutations (reshuffling)
+COR <- vector(,num) # Pre-allocate vector to hold correlation coefficients 
+
+### Shuffle temperatures num times, and calculate correlation coefficient 
+# for each random sample. 
+# Save results to vector. 
+
+#### function for sampling ####
+data <- ats$Temp
+size <- length(ats$Temp)
+
+shuffle <- function(data, size){
+  s <- sample(data, size, replace = TRUE) # sample data
+  return(cor(ats$Year,s))
+}
+
+### Apply function to data set num times and save to vector ###
+COR <- sapply(1:num, function(i) shuffle(data, size))
+
+### plot results ###
+# plot distribution of random correlation coefficients and save pdf
+pdf("../results/permutationplot.pdf", 11.7, 8.3) # open pdf
+    plot(COR, dnorm(COR, mean(COR), sd(COR)), 
+     xlim=c(-0.55, 0.55), xlab = "Correlation coefficients of random samples",
+     ylab = "Frequency", main="Distribution of random correlation coefficients", cex.lab=1.5, cex.main=1.5) # plot covariance of random samples
+
+    abline(v=Observed.Cor, lwd=2, col = "red") # add line for observed covariance
+    text(0.40, 3, "Observed", col = "red", cex=2) #label 
+graphics.off() # close pdf
+
+
+
+**********************************************************************
+
+Testing Florida_Warming.R...
+
+Output (only first 500 characters): 
+
+
+**********************************************************************
+Loading objects:
+  ats
+
+**********************************************************************
+
+Code ran without errors
+
+Time consumed = 0.28333s
+
+======================================================================
+Inspecting script file R_conditionals.R...
+
+File contents are:
+
+**********************************************************************
+#!/usr/bin/Rscript --vanilla 
+# Author: Izie Wood (iw121@ic.ac.uk)
+# Desc: Illustrates use of conditionals in R
+# Date: Oct 2021
+
+# Checks if an integer is even
+is.even <- function(n = 2){
+    if (n %% 2 == 0)
+    {
+        return(paste(n,'is even!'))
+    }
+    return(paste(n,'is odd!'))
+}
+
+is.even(6)
+
+# Checks if a number is a power of two
+is.power2 <- function(n = 2){
+    if (log2(n) %% 1 ==0)
+    {
+        return(paste(n,"is a power of 2"))
+    }
+    return(paste(n, "is not a power of 2!"))
+}
+
+is.power2(4)
+
+# Checks if a number is prime
+is.prime <- function(n){
+    if (n == 0){
+        return(paste(n,"is a zero!"))
+    }
+    if (n == 1){
+        return(paste(n," is just a unit!"))
+    }
+    ints <- 2:(n-1)
+    if (all(n%%ints!=0)){
+        return(paste(n,"is a prime!"))
+    }
+    return(paste(n,'is a composite!'))
+}
+
+is.prime(3)
+**********************************************************************
+
+Testing R_conditionals.R...
+
+Output (only first 500 characters): 
+
+
+**********************************************************************
+[1] "6 is even!"
+[1] "4 is a power of 2"
+[1] "3 is a prime!"
+
+**********************************************************************
+
+Code ran without errors
+
+Time consumed = 0.05522s
+
+======================================================================
+Inspecting script file GPDD_Data.R...
+
+File contents are:
+
+**********************************************************************
+#!/usr/bin/Rscript --vanilla 
+# Author: Izie Wood (iw121@ic.ac.uk)
+# Script: Creates a world map using maps packages
+# superimposes all the locations from which we have data 
+# in the GPDD dataframe
+# Date: Nov 2021
+
+############## Load maps ###############
+require(maps) # contains geographical outlines of many maps
+require(tidyverse)
+
+############# Load data ################
+load("../data/GPDDFiltered.RData", verbose = TRUE) # gpdd
+
+
+############# plot map ###################
+# load exported world map from maps, save to df
+world <- map_data("world") #ggplot2 function turns points in outline into df
+
+# plot world map 
+world.map <- ggplot() + geom_polygon(data= world, aes(x=long, y = lat,
+                                         group = group), fill = "seashell3", 
+                        colour = "lightslategrey") +
+  coord_fixed(1.3) # cartesian coordinates- fixes aspect size ratio
+
+# plot coordinates from gpdd
+world.map <- world.map + geom_point(data = gpdd, aes(x = long, y = lat), 
+                       colour = "yellow", size = 1)
+
+print(world.map)
+
+## data here seems heavily biased towards locations in the global
+# north. Likely as a result of accessibility. This omits citings in large 
+# parts of the world. 
+**********************************************************************
+
+Testing GPDD_Data.R...
+
+Output (only first 500 characters): 
+
+
+**********************************************************************
+Loading objects:
+  gpdd
+
+**********************************************************************
+
+Encountered error (or warning):
+Loading required package: maps
+Warning message:
+In library(package, lib.loc = lib.loc, character.only = TRUE, logical.return = TRUE,  :
+  there is no package called ‘maps’
+Loading required package: tidyverse
+── Attaching packages ─────────────────────────────────────── tidyverse 1.2.1 ──
+✔ ggplot2 2.2.1       ✔ purrr   0.3.2  
+✔ tibble  2.1.1       ✔ dplyr   0.8.0.1
+✔ tidyr   0.8.3       ✔ stringr 1.2.0  
+✔ readr   1.3.1       ✔ forcats 0.4.0  
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+Error: Package `maps` required for `map_data`.
+Please install and try again.
+Execution halted
+
+======================================================================
+Inspecting script file apply2.R...
+
+File contents are:
+
+**********************************************************************
+#!/usr/bin/Rscript --vanilla
+# Author: Izie Wood
+# Desc: Script illustrating apply using own function
+# Date: Oct 2021
+
+SomeOperation <- function(v) { # (What dos this function do?)
+    if (sum(v) > 0){ #note that sum(v) is a single (scalar) value
+        return(v * 100)
+    }
+    return (v)
+}
+
+M <- matrix(rnorm(100), 10, 10)
+print(apply(M, 1, SomeOperation))
+**********************************************************************
+
+Testing apply2.R...
+
+Output (only first 500 characters): 
+
+
+**********************************************************************
+             [,1]        [,2]        [,3]       [,4]       [,5]        [,6]
+ [1,]  1.44901689 -0.79218859   74.692806  0.6639077  26.688461  -44.192791
+ [2,] -0.21542679 -0.25417938  114.409042 -0.3355376  87.446448   76.674475
+ [3,]  0.51003519 -1.70462899   37.560845 -1.2076048 -19.051269   -6.561183
+ [4,] -0.94115817  0.09180126  -23.390519 -1.1904727 155.000690  -64.102285
+ [5,] -1.37387694  1.22824202 -172.004619  0.8139405 -64.255952  109.696035
+ [6,] -0.52174236 -2.34122641   59.474631 -1.
+**********************************************************************
+
+Code ran without errors
+
+Time consumed = 0.07269s
+
+======================================================================
+Inspecting script file apply1.R...
+
+File contents are:
+
+**********************************************************************
+#!/usr/bin/Rscript --vanilla
+# Author: Izie Wood
+# Desc: Script demonstrating use of apply
+# Date: Oct 2021
+
+## Build a random matrix 
+M <- matrix(rnorm(100), 10, 10)
+
+## Take the mean of each row
+RowMeans <- apply(M, 1, mean)
+print (RowMeans)
+
+## Now the variance
+RowVars <- apply(M, 1, var)
+print (RowVars)
+
+## By column
+ColMeans <- apply(M, 2, mean)
+print (ColMeans)
+**********************************************************************
+
+Testing apply1.R...
+
+Output (only first 500 characters): 
+
+
+**********************************************************************
+ [1] -0.059089868  0.266220755 -0.129053692  0.241086907  0.262131365
+ [6]  0.069560473  0.529120998 -0.277220193  0.012327847  0.003422122
+ [1] 0.6810808 1.0837719 0.9355956 0.9195820 0.8283214 0.8354528 1.2474562
+ [8] 1.1789444 0.5997026 1.3148754
+ [1]  0.42764345 -0.11490019  0.19565310  0.52994436 -0.21416911 -0.20837820
+ [7]  0.08224905  0.59430516  0.26494182 -0.63878273
+
+**********************************************************************
+
+Code ran without errors
+
+Time consumed = 0.06292s
+
+======================================================================
+Inspecting script file Florida_Warming.tex...
+
+File contents are:
+
+**********************************************************************
+\documentclass[11pt]{article}
+\usepackage{graphicx}
+\graphicspath{{../results/}}
+
+\begin{document}
+
+\section{Results}
+        There appeared to be a positive correlation between temperature and time, with a 
+        Pearson's correlation coefficient of 0.533. 
+        \begin{figure}[h]
+        \begin{center}
+            \includegraphics[scale=.30]{FloridaPlot}
+            \label{fig}
+        \end{center}
+        \end{figure}
+
+        To see the signficiance of this correlation, we compared the observed correlation
+        coefficient agaisnt a distribution of completely random correlation coefficients, 
+        achieved through reshuffling our data 5000 times. 
+        
+        \begin{figure}[ht]
+        \begin{center}
+            \includegraphics[scale=0.25]{permutationplot}
+        \end{center}
+        \end{figure}
+
+        Out of 5,000 randomely generated correlation coefficients, none of them were 
+        greater than our observed correlation coefficient.
+        Thus, the observed positive correlation between temperature and time has an 
+        approximate asymptotic p-value of 0.00.
+        Florida is getting warmer. 
+
+\end{document}
+**********************************************************************
+
+Testing Florida_Warming.tex...
+
+======================================================================
+Inspecting script file try.R...
+
+File contents are:
+
+**********************************************************************
+#!/usr/bin/Rscript --vanilla
+# Author: Izie Wood
+# Desc: Script illustrates examples of try
+# Date: Oct 2021
+
+doit <- function(x){ #runs simulation by sampling from synthetic population
+    temp_x <- sample(x, replace = TRUE)
+    if(length(unique(temp_x)) > 30) { #only take mean if sample was sufficient
+    print(paste("Mean of this simple was:", as.character(mean(temp_x)))) # returns mean
+    }
+    else {
+        stop("Couldn't calculate mean: too few unique values!")
+    }
+}
+
+set.seed(1345) # again, to get the same result for illustration
+
+popn <- rnorm(50)
+
+hist(popn)
+
+## Without try
+lapply(1:15, function(i) doit(popn))
+
+## With try
+result <- lapply(1:15, function(i) try(doit(popn), FALSE))
+class(result)
+result
+
+# The same using loop
+result <- vector("list", 15) #Preallocate/Initialize
+for(i in 1:15) {
+    result[[i]] <- try(doit(popn), FALSE)
+    }
+**********************************************************************
+
+Testing try.R...
+
+Output (only first 500 characters): 
+
+
+**********************************************************************
+[1] "Mean of this simple was: -0.157308908210876"
+[1] "Mean of this simple was: -0.161929636555961"
+[1] "Mean of this simple was: 0.0566243156959964"
+[1] "Mean of this simple was: -0.0587377219016532"
+[1] "Mean of this simple was: -0.0728190342970679"
+[1] "Mean of this simple was: -0.123500076346669"
+
+**********************************************************************
+
+Encountered error (or warning):
+Error in doit(popn) : Couldn't calculate mean: too few unique values!
+Calls: lapply -> FUN -> doit
+Execution halted
+
+======================================================================
+Inspecting script file break.R...
+
+File contents are:
+
+**********************************************************************
+#!/usr/bin/Rscript --vanilla 
+# Author: Izie Wood (iw121@ic.ac.uk)
+# Desc: Simple script illustrating break arguments in R
+# Date: Oct 2021
+
+i <- 0 # Initialize i 
+    while(i < Inf){
+        if (i == 10) { 
+            break
+        } # Break out of the while loop
+        else {
+            cat("i equals", i, "\n")
+            i <- i + 1 # Update i
+        }
+    }
+**********************************************************************
+
+Testing break.R...
+
+Output (only first 500 characters): 
+
+
+**********************************************************************
+i equals 0 
+i equals 1 
+i equals 2 
+i equals 3 
+i equals 4 
+i equals 5 
+i equals 6 
+i equals 7 
+i equals 8 
+i equals 9 
+
+**********************************************************************
+
+Code ran without errors
+
+Time consumed = 0.07054s
+
+======================================================================
+Inspecting script file DataWrang.R...
+
+File contents are:
+
+**********************************************************************
+################################################################
+################## Wrangling the Pound Hill Dataset ############
+################################################################
+
+############# Load the dataset ###############
+# header = false because the raw data don't have real headers
+MyData <- as.matrix(read.csv("../data/PoundHillData.csv", header = FALSE))
+
+# header = true because we do have metadata headers
+MyMetaData <- read.csv("../data/PoundHillMetaData.csv", header = TRUE, sep = ";")
+
+############# Inspect the dataset ###############
+head(MyData)
+dim(MyData)
+str(MyData)
+fix(MyData) #you can also do this
+fix(MyMetaData)
+
+############# Transpose ###############
+# To get those species into columns and treatments into rows 
+MyData <- t(MyData) 
+head(MyData)
+dim(MyData)
+
+############# Replace species absences with zeros ###############
+MyData[MyData == ""] = 0
+
+############# Convert raw matrix to data frame ###############
+
+TempData <- as.data.frame(MyData[-1,],stringsAsFactors = F) #stringsAsFactors = F is important!
+colnames(TempData) <- MyData[1,] # assign column names from original data
+
+############# Convert from wide to long format  ###############
+require(reshape2) # load the reshape2 package
+
+?melt #check out the melt function
+
+MyWrangledData <- melt(TempData, id=c("Cultivation", "Block", "Plot", "Quadrat"), variable.name = "Species", value.name = "Count")
+
+MyWrangledData[, "Cultivation"] <- as.factor(MyWrangledData[, "Cultivation"])
+MyWrangledData[, "Block"] <- as.factor(MyWrangledData[, "Block"])
+MyWrangledData[, "Plot"] <- as.factor(MyWrangledData[, "Plot"])
+MyWrangledData[, "Quadrat"] <- as.factor(MyWrangledData[, "Quadrat"])
+MyWrangledData[, "Count"] <- as.integer(MyWrangledData[, "Count"])
+
+str(MyWrangledData)
+head(MyWrangledData)
+dim(MyWrangledData)
+
+############# Exploring the data (extend the script below)  ###############
+
+**********************************************************************
+
+Testing DataWrang.R...
+
+Output (only first 500 characters): 
+
+
+**********************************************************************
+     V1                     V2        V3        V4        V5        V6       
+[1,] "Cultivation"          "october" "october" "october" "october" "october"
+[2,] "Block"                "a"       "a"       "a"       "a"       "a"      
+[3,] "Plot"                 "1"       "1"       "1"       "1"       "1"      
+[4,] "Quadrat"              "Q1"      "Q2"      "Q3"      "Q4"      "Q5"     
+[5,] "Achillea millefolium" "4"       "8"       "3"       "20"      "6"      
+[6,] "Agrostis gigantea"    ""   
+**********************************************************************
+
+Code ran without errors
+
+Time consumed = 10.00592s
+
+======================================================================
+Inspecting script file Vectorize2.R...
+
+File contents are:
+
+**********************************************************************
+#!/usr/bin/Rscript --vanilla
+# Author: Izie Wood (iw121@ic.ac.uk)
+# Script: Vectorize2.R
+# Desc: Stochastic Ricker Model vectorized
+# Date: Oct 2021 
+
+# Runs the stochastic Ricker equation with gaussian fluctuations
+
+rm(list = ls())
+
+stochrick <- function(p0 = runif(1000, .5, 1.5), r = 1.2, K = 1, sigma = 0.2,numyears = 100)
+# runif 1000 random numbers from uniform .5, 1.5
+{
+
+  N <- matrix(NA, numyears, length(p0))  #initialize empty matrix
+
+  N[1, ] <- p0 #populate row 1 with random numbers from P0, aka population 0 
+
+  for (pop in 1:length(p0)) { #loop through the populations
+
+    for (yr in 2:numyears){ #for each pop, loop through the years
+
+      N[yr, pop] <- N[yr-1, pop] * exp(r * (1 - N[yr - 1, pop] / K) + rnorm(1, 0, sigma)) # add one fluctuation from normal distribution
+    
+     }
+  
+  }
+ return(N)
+}
+
+# Now write another function called stochrickvect that vectorizes the above to
+# the extent possible, with improved performance: 
+
+rm(list = ls())
+
+stochrickvect <- function(p0 = runif(1000, .5, 1.5), r = 1.2, K = 1, sigma = 0.2,numyears = 100)
+{
+
+  N <- matrix(NA, numyears, length(p0))  #initialize empty matrix
+
+  N[1, ] <- p0 #populate row 1 with random numbers from P0, aka population 0 
+
+  for (yr in 2:numyears) { #loop through the populations
+      N[yr,] <- N[yr-1,] * exp(r * (1 - N[yr - 1,] / K) + rnorm(1000, 0, sigma)) # add one fluctuation from normal distribution
+     }
+
+ return(N)
+}
+
+print("Vectorized Stochastic Ricker takes:")
+print(system.time(res2<-stochrickvect()))
+**********************************************************************
+
+Testing Vectorize2.R...
+
+Output (only first 500 characters): 
+
+
+**********************************************************************
+[1] "Vectorized Stochastic Ricker takes:"
+   user  system elapsed 
+  0.037   0.000   0.037 
+
+**********************************************************************
+
+Code ran without errors
+
+Time consumed = 0.13000s
+
+======================================================================
+Inspecting script file sample.R...
+
+File contents are:
+
+**********************************************************************
+#!/usr/bin/Rscript --vanilla
+# Author: Izie Wood
+# Desc: Script demonstrating different types of vectorisation using a sampling experiment
+# Date: Oct 2021
+
+## A function to take a sample size of n from a population "popn" and return its mean 
+myexperiment <- function(popn,n){
+    pop_sample <- sample(popn, n, replace = FALSE) # replace = FALSE- numbers not put back into sample size after being picked
+    return(mean(pop_sample))
+}
+
+## Calculate means using a for loop without preallocation: 
+loopy_sample1 <- function(popn, n, num){
+    result1 <- vector() #Initialise empty vector of size 1
+    for (i in 1:num){
+        result1 <- c(result1, myexperiment(popn, n))
+    }
+    return(result1)
+}
+
+## To run "num" iterations of the experiment using a for loop on a vector with preallocation:
+loopy_sample2 <- function(popn, n, num){
+    result2 <- vector(,num) #Preallocate expected size 
+    for(i in 1:num){
+        result2[i] <- myexperiment(popn, n)
+    }
+    return(result2)
+}
+
+## To run "num" iterations of the experiment using a for loop on a list with preallocation
+loopy_sample3 <- function(popn, n, num){
+    result3 <- vector("list", num) # Preallocate expected size
+    for(i in 1:num){
+        result3[[i]] <- myexperiment(popn, n)
+    }
+    return(result3)
+}
+
+## To run "num" iterations of the experiment using vectorisation with lapply:
+lapply_sample <- function(popn, n, num){
+    result4 <- lapply(1:num, function(i) myexperiment(popn, n))
+    return(result4)
+}
+
+## To run "num" iterations of the experiment using vectorization with sapply: 
+    sapply_sample <- function(popn, n, num){
+        result5 <- lapply(1:num, function(i) myexperiment(popn,n))
+        return(result5)
+    }
+
+popn <- rnorm(1000) # generate a population
+hist(popn)
+
+## Run and time different functions
+
+n <- 20 # sampe size for each experiment
+num <- 1000 # Number of times to rerun the experiment
+
+print("The loopy, none-preallocation approach takes:" )
+print(system.time(loopy_sample1(popn, n, num)))
+
+print("The loopy, but with preallocation approach takes:" )
+print(system.time(loopy_sample2(popn, n, num)))
+
+print("The loopy, non-preallocation approach on a list takes:" )
+print(system.time(loopy_sample3(popn, n, num)))
+
+print("THe vectorized sapply approach takes:" )
+print(system.time(sapply_sample(popn, n, num)))
+
+print("The vectorized lapply approach takes:" )
+print(system.time(lapply_sample(popn, n, num)))
+**********************************************************************
+
+Testing sample.R...
+
+Output (only first 500 characters): 
+
+
+**********************************************************************
+[1] "The loopy, none-preallocation approach takes:"
+   user  system elapsed 
+  0.035   0.000   0.035 
+[1] "The loopy, but with preallocation approach takes:"
+   user  system elapsed 
+  0.011   0.000   0.011 
+[1] "The loopy, non-preallocation approach on a list takes:"
+   user  system elapsed 
+  0.011   0.000   0.011 
+[1] "THe vectorized sapply approach takes:"
+   user  system elapsed 
+  0.008   0.000   0.009 
+[1] "The vectorized lapply approach takes:"
+   user  system elapsed 
+  0.008   0.000   0
+**********************************************************************
+
+Code ran without errors
+
+Time consumed = 0.21541s
+
+======================================================================
+Inspecting script file TreeHeight.R...
+
+File contents are:
+
+**********************************************************************
+# Author: Izie Wood (iw121@ic.ac.uk)
+# Script: TreeHeight.R
+# Desc: Calculates Tree height from distance and degree. 
+# Loads data from CSV
+# Creates csv output file containing original data and Tree height
+#
+# Date: Oct 2021
+
+
+######## Load CSV file to data frame #########
+CSTree <- (read.csv("../data/trees.csv")) # pun of csv
+
+####### Calculate tree height ##########
+# # This function calculates the heights of trees given distance fo each tree
+# from its base and angle to its top, using the trionometric formula
+# 
+# height = distance * tan(radians)
+#
+# ARGUMENTS
+# degrees: The angle of elevation of the tree
+# distance: The distance from the base of the tree (e.g., meters)
+
+TreeHeight <- function(degrees, distance){ #calculates tree height
+    radians <- degrees * pi / 180 
+    height <- distance * tan(radians)
+    return(height)
+}
+
+# Use above function for each row in data frame, save to vector
+l <- length(CSTree[,1]) # column length/row numbers
+Col4 <- vector(,l) # preallocate vector 
+for (i in 1:l){
+    TreeHts <- TreeHeight(CSTree[i,3], CSTree[i,2]) # Input degree/distance from dataframe
+    Col4[i] <- TreeHts
+}
+####### Save heights as CSV ################
+# Add heights to dataframe CSTree
+CSTree[4] <- Col4
+colnames(CSTree)[4] <- "Height.m" # name column
+
+# Save dataframe to CSV
+Location <- "../results/TreeHts.csv"
+write.csv(CSTree, Location)
+
+# Update user
+print("Calculating tree heights...")
+print(paste("Done! File saved to:", Location))
+**********************************************************************
+
+Testing TreeHeight.R...
+
+Output (only first 500 characters): 
+
+
+**********************************************************************
+[1] "Calculating tree heights..."
+[1] "Done! File saved to: ../results/TreeHts.csv"
+
+**********************************************************************
+
+Code ran without errors
+
+Time consumed = 0.08692s
+
+======================================================================
+Inspecting script file MyBars.R...
+
+File contents are:
+
+**********************************************************************
+#!/usr/bin/Rscript --vanilla 
+# Author: Izie Wood
+# Desc: Annotate plot in ggplot2 excersize 
+# Date: Nov 2021
+
+require(tidyverse)
+
+a <- read.table("../data/Results.txt", header = TRUE) #load data
+
+a$ymin <- rep(0, dim(a)[1]) # append a column of zeros 
+
+# Print the first linerange 
+p <- ggplot(a)
+p <- p + geom_linerange(data = a, aes(
+                            x = x,
+                            ymin = ymin, 
+                            ymax = y1, 
+                            size = (0.5)
+                            ),
+                        colour = "#E69F00",
+                        alpha = 1/2, show.legend = FALSE)
+
+# Print the second linerange 
+p <- p + geom_linerange(data = a, aes(
+                        x = x, 
+                        ymin = ymin, 
+                        ymax = y2,
+                        size = (0.5)
+                        ), 
+                      colour = "#56B4E9",
+                      alpha = 1/2, show.legend = FALSE)
+
+# Print the third linerange:
+p <- p + geom_linerange(data = a, aes(
+                        x = x,
+                        ymin = ymin,
+                        ymax = y3,
+                        size = (0.5)
+                        ),
+                      colour = "#D55E00",
+                      alpha = 1/2, show.legend = FALSE)
+
+# Annotate the plot with labels 
+p <- p + geom_text(data = a, aes(x=x, y = -500, label = Label))
+
+# now set the axis labels, remove the legend and prepare for bw printing
+p <-p + scale_x_continuous("My x axis",
+                          breaks = seq(3, 5, by = 0.05)) +
+                          scale_y_continuous("My y axis") +
+                          theme_bw() +
+                          theme(legend.position = "none")
+# save to pdf 
+pdf("../results/MyBars.pdf")
+print(p)
+dev.off()
+**********************************************************************
+
+Testing MyBars.R...
+
+Output (only first 500 characters): 
+
+
+**********************************************************************
+null device 
+          1 
+
+**********************************************************************
+
+Encountered error (or warning):
+Loading required package: tidyverse
+── Attaching packages ─────────────────────────────────────── tidyverse 1.2.1 ──
+✔ ggplot2 2.2.1       ✔ purrr   0.3.2  
+✔ tibble  2.1.1       ✔ dplyr   0.8.0.1
+✔ tidyr   0.8.3       ✔ stringr 1.2.0  
+✔ readr   1.3.1       ✔ forcats 0.4.0  
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+Warning message:
+Removed 91 rows containing missing values (geom_text). 
+
+======================================================================
+Inspecting script file preallocate.R...
+
+File contents are:
+
+**********************************************************************
+#!/usr/bin/Rscript --vanilla
+# Author: Izie Wood
+# Desc: Script demonstrating time taken to run functions with and without preallocating the vectors
+# Date: Oct 2021
+
+NoPreallocFun <- function(x){
+    a <- vector() # empty vector
+    for (i in 1:x) {
+        a <- c(a, i)
+        print(a)
+        print(object.size(a))
+    }
+}
+
+system.time(NoPreallocFun(10))
+
+PreallocFun <- function(x){
+    a <- rep(NA, x) # pre-allocated vector
+    for (i in 1:x) {
+        a[i] <- i
+        print(a)
+        print(object.size(a))
+    }
+}
+
+system.time(PreallocFun(10))
+**********************************************************************
+
+Testing preallocate.R...
+
+Output (only first 500 characters): 
+
+
+**********************************************************************
+[1] 1
+48 bytes
+[1] 1 2
+48 bytes
+[1] 1 2 3
+56 bytes
+[1] 1 2 3 4
+56 bytes
+[1] 1 2 3 4 5
+72 bytes
+[1] 1 2 3 4 5 6
+72 bytes
+[1] 1 2 3 4 5 6 7
+72 bytes
+[1] 1 2 3 4 5 6 7 8
+72 bytes
+[1] 1 2 3 4 5 6 7 8 9
+88 bytes
+ [1]  1  2  3  4  5  6  7  8  9 10
+88 bytes
+   user  system elapsed 
+  0.023   0.000   0.023 
+ [1]  1 NA NA NA NA NA NA NA NA NA
+88 bytes
+ [1]  1  2 NA NA NA NA NA NA NA NA
+88 bytes
+ [1]  1  2  3 NA NA NA NA NA NA NA
+88 bytes
+ [1]  1  2  3  4 NA NA NA NA NA NA
+88 bytes
+ [1]  1  2  3  4  5 NA N
+**********************************************************************
+
+Code ran without errors
+
+Time consumed = 0.10546s
+
+======================================================================
+Inspecting script file next.R...
+
+File contents are:
+
+**********************************************************************
+#!/usr/bin/Rscript --vanilla 
+# Author: Izie Wood (iw121@ic.ac.uk)
+# Desc: Script illustrating next function in R
+# Date: Oct 2021
+
+for (i in 1:10) {
+    if ((i %% 2 ) == 0) #check if number is odd
+        next #pass to next iteration of loop
+    print(i)
+}
+**********************************************************************
+
+Testing next.R...
+
+Output (only first 500 characters): 
+
+
+**********************************************************************
+[1] 1
+[1] 3
+[1] 5
+[1] 7
+[1] 9
+
+**********************************************************************
+
+Code ran without errors
+
+Time consumed = 0.07479s
+
+======================================================================
+Inspecting script file basic_io.R...
+
+File contents are:
+
+**********************************************************************
+#!/usr/bin/Rscript --vanilla 
+# Author: Izie Wood (iw121@ic.ac.uk)
+# A simple script to illustrate R input-output.
+#Run line by line and check inputs outputs to understand what is happening
+MyData <- read.csv("../data/trees.csv", header = TRUE) # import with headers
+
+write.csv(MyData, "../results/MyData.csv") #write it out as a new file 
+
+write.table(MyData[1,], file = "../results/MyData.csv", append=TRUE) # Append to it
+
+write.csv(MyData, "../results/MyData.csv", row.names=TRUE) #write row names
+
+write.table(MyData, "../results/MyData.csv", col.names=FALSE) #ignore column names
+
+print("Script Complete!")
+**********************************************************************
+
+Testing basic_io.R...
+
+Output (only first 500 characters): 
+
+
+**********************************************************************
+[1] "Script Complete!"
+
+**********************************************************************
+
+Encountered error (or warning):
+Warning message:
+In write.table(MyData[1, ], file = "../results/MyData.csv", append = TRUE) :
+  appending column names to file
+
+======================================================================
+Inspecting script file control_flow.R...
+
+File contents are:
+
+**********************************************************************
+#!/usr/bin/Rscript --vanilla 
+# Author: Izie Wood (iw121@ic.ac.uk)
+# Desc: Simple script illustrating control functions in R 
+# Date: Oct 2021
+
+a <- TRUE
+if (a == TRUE){
+    print ("a is TRUE")
+} else {
+    print ("a is FALSE")
+}
+
+z <- runif(1) ## Generate uniformly distributed random number
+if (z <= 0.05) {
+    print ("Less than a half")
+    }
+
+for (i in 1:10){
+    j <- i * i
+    print(paste(i, " squared is", j ))
+}
+
+for(species in c('Helidoxa rubinoides',
+                'Boissonneaua jardini',
+                'Sula nebouxii')){
+    print(paste('The species is', species))
+}
+
+v1 <- c("a","bc","def")
+for (i in v1){
+    print(i)
+}
+
+i <- 0
+while (i <10){
+    i <- i + 1
+    print(i^2)
+}
+**********************************************************************
+
+Testing control_flow.R...
+
+Output (only first 500 characters): 
+
+
+**********************************************************************
+[1] "a is TRUE"
+[1] "1  squared is 1"
+[1] "2  squared is 4"
+[1] "3  squared is 9"
+[1] "4  squared is 16"
+[1] "5  squared is 25"
+[1] "6  squared is 36"
+[1] "7  squared is 49"
+[1] "8  squared is 64"
+[1] "9  squared is 81"
+[1] "10  squared is 100"
+[1] "The species is Helidoxa rubinoides"
+[1] "The species is Boissonneaua jardini"
+[1] "The species is Sula nebouxii"
+[1] "a"
+[1] "bc"
+[1] "def"
+[1] 1
+[1] 4
+[1] 9
+[1] 16
+[1] 25
+[1] 36
+[1] 49
+[1] 64
+[1] 81
+[1] 100
+
+**********************************************************************
+
+Code ran without errors
+
+Time consumed = 0.08056s
+
+======================================================================
+Inspecting script file browse.R...
+
+File contents are:
+
+**********************************************************************
+#!/usr/bin/Rscript --vanilla
+# Author: Izie Wood
+# Desc: Script demonstrating browser function in R
+# Date: Oct 2021
+
+Exponential <- function(N0 = 1, r = 1, generations = 10){
+    # Runs a simulation of exponential growth
+    # Returns a vector of length generations 
+
+    N <- rep(NA, generations) # Creates a vector of NA
+
+    N[1] <- N0
+    for (t in 2:generations){
+        N[t] <- N[t - 1] * exp(r)
+        browser()
+    }
+    return(N)
+}
+
+plot(Exponential(), type="l", main="Exponential growth")
+**********************************************************************
+
+Testing browse.R...
+
+Output (only first 500 characters): 
+
+
+**********************************************************************
+Called from: Exponential()
+debug: N[t] <- N[t - 1] * exp(r)
+debug: browser()
+debug: N[t] <- N[t - 1] * exp(r)
+debug: browser()
+debug: N[t] <- N[t - 1] * exp(r)
+debug: browser()
+debug: N[t] <- N[t - 1] * exp(r)
+debug: browser()
+debug: N[t] <- N[t - 1] * exp(r)
+debug: browser()
+debug: N[t] <- N[t - 1] * exp(r)
+debug: browser()
+debug: N[t] <- N[t - 1] * exp(r)
+debug: browser()
+debug: N[t] <- N[t - 1] * exp(r)
+debug: browser()
+
+**********************************************************************
+
+Code ran without errors
+
+Time consumed = 0.09819s
+
+======================================================================
+Inspecting script file boilerplate.R...
+
+File contents are:
+
+**********************************************************************
+#!/usr/bin/Rscript --vanilla 
+# Author: Izie Wood (iw121@ic.ac.uk)
+# Desc: A boilerplate Rscript
+# Date: Oct 2021
+
+MyFunction <- function(Arg1, Arg2){
+
+    # Statements involving Arg1, Arg2: 
+    print(paste("Argument", as.character(Arg1), "is a", class(Arg1))) # print Arg1's type
+    print(paste("Argument", as.character(Arg2), "is a", class(Arg2))) # print Arg2's type
+
+    return(c(Arg1, Arg2)) #this is optional but useful
+}
+
+MyFunction(1,2) #test the function
+MyFunction("Riki","Tiki") # A different test
+**********************************************************************
+
+Testing boilerplate.R...
+
+Output (only first 500 characters): 
+
+
+**********************************************************************
+[1] "Argument 1 is a numeric"
+[1] "Argument 2 is a numeric"
+[1] 1 2
+[1] "Argument Riki is a character"
+[1] "Argument Tiki is a character"
+[1] "Riki" "Tiki"
+
+**********************************************************************
+
+Code ran without errors
+
+Time consumed = 0.07818s
+
+======================================================================
+Inspecting script file Vectorize1.R...
+
+File contents are:
+
+**********************************************************************
+#!/usr/bin/Rscript --vanilla
+# Author: Izie Wood
+# Desc: Script demonstrating time taken for vectorized vs. non-vectorized functions
+# Date: Oct 2021
+
+M <- matrix(runif(1000000),1000,1000)
+
+sumALLElements <- function(M){
+    Dimensions <- dim(M)
+    Tot <- 0
+    for (i in 1:Dimensions[1]){
+        for (j in 1:Dimensions[2]){
+            Tot <- Tot + M[i,j]
+        }
+    }
+    return (Tot)
+}
+print("Using loops, the time taken is:")
+print(system.time(sumALLElements(M)))
+
+print("Using the in-built vectorized function, the time taken is:")
+print(system.time(sum(M)))
+**********************************************************************
+
+Testing Vectorize1.R...
+
+Output (only first 500 characters): 
+
+
+**********************************************************************
+[1] "Using loops, the time taken is:"
+   user  system elapsed 
+  0.065   0.000   0.065 
+[1] "Using the in-built vectorized function, the time taken is:"
+   user  system elapsed 
+  0.000   0.000   0.001 
+
+**********************************************************************
+
+Code ran without errors
+
+Time consumed = 0.17639s
+
+======================================================================
+======================================================================
+Finished running scripts
+
+Ran into 9 errors
+
+======================================================================
+======================================================================
+
+FINISHED WEEKLY ASSESSMENT
+
+Current Points for the Week = 100
+
+NOTE THAT THESE ARE POINTS, NOT MARKS FOR THE WEEK!
