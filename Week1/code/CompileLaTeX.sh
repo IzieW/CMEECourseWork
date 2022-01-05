@@ -1,4 +1,5 @@
 #!/bin/bash
+#
 if [ -z $1 ]; then # feedback if no argument is given. Exit.
     echo "Error- Please give name of LaTeX file after the command"
     echo "ex: CompileLaTeX.sh FILE"

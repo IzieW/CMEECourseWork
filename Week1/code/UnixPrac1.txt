@@ -1,9 +1,11 @@
+## Author: Izie Wood iw121@ic.ac.uk
+## Fasta exercises from TheMulQuaBio ch.1: Unix and Linux
+
 #1 Count how many lines there are in each file 
 
 wc -l ../data/fasta/*.fasta
 
 #2 Print everything starting from te second line for the E. coli genome
-# Note file needs roughly 79000 lines to show in terminal
 
 tail -n +2 ../data/fasta/E.coli.fasta # using tail -n +2 to exclude first two lines
 
@@ -23,4 +25,3 @@ tail -n +2 ../data/fasta/E.coli.fasta | tr -d "\n" | grep -o ATGC | wc -l
 # printf to round off at second decimal point
 
  T=`grep -o T < ../data/fasta/E.coli.fasta | wc -l`; A=`grep -o A < ../data/fasta/E.coli.fasta | wc -l`; G=`grep -o G < ../data/fasta/E.coli.fasta | wc -l`; C=`grep -o C < ../data/fasta/E.coli.fasta | wc -l`; AT=$(( $A + $T )); CG=$(( $C + $G )); ATR=$(printf %.2f $(echo "scale=3; $AT / $CG" | bc -l)); echo "The AT/GC ratio is $ATR:1"
-

@@ -15,11 +15,11 @@ if [ -z $1 ] | [ -z $2 ] | [ -z $3 ]; then #if file 1, 2, or 3 not given
     echo "Ex: bash ConcatenateTwoFiles.sh FILE1 FILE2 FILE3"
     echo "Try again."
     exit
-else    
-cat $1 > $3
-cat $2 >> $3
+else    # otherwise...
+cat $1 > $3 # Save file1 to file3
+cat $2 >> $3  #Append file2 to file3
 echo "Merged File is"
-cat $3
+cat $3 # Print merged file contents
 echo
 echo "saved to $3"
 exit

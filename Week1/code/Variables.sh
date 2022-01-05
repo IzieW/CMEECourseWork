@@ -1,11 +1,9 @@
 #!/bin/bash
 # Author: Izie Wood iw121@ic.ac.uk
 # Script: variables.sh
-# Desc: show the use of variables in a script- Special varibales, Explicit declaration, reading from user, command substitution
+# Desc:  Illustrates the use of various variables in bash
 # Arguments: none
 # Date: Oct 2021
-
-## Illustrates the use of variables
 
 # Special variables
 
@@ -16,16 +14,17 @@ echo "The first argument is $1"
 echo "The second argument is $2"
 
 # Assigned Variables; Explicit declaration
-MyVar='some string'
-echo
-echo "The current value of the variable is" $MyVar
+MY_VAR='some string'
+echo # blank space
+echo "The current value of the variable is" $MY_VAR
 echo
 echo 'Please enter a new string'
-read MyVar
-if [ -z $MyVar ]; then # if no value entered, flaf MyVar is empty
-echo 'No string entered'
+read MY_VAR # Take input from command line
+
+if [ -z $MY_VAR ]; then # if no value entered, 
+echo "No string entered."
 fi
-echo 'The current value of the variable is' $MyVar
+echo 'The current value of the variable is' $MY_VAR
 echo
 
 ## Assigned Variables; Reading multiple variables from user
