@@ -1,6 +1,5 @@
 #!/usr/bin/env Python3
-
-"""Basic script showing how to import objects from file"""
+"""Script demonstrating how to import objects from file"""
 __author__ = 'Izie Wood (iw121@ic.ac.uk)'
 __version__ = '0.0.1'
 
@@ -11,7 +10,7 @@ __version__ = '0.0.1'
 f = open('../sandbox/test.txt', 'r')
 # use "implicit" for loop:
 # if the object is a file, python will cycle over lines
-for line in f:
+for line in f: # implicit loop
     print(line)
 
 # close the file
@@ -20,7 +19,7 @@ f.close()
 # Same example, skip blank lines
 f = open('../sandbox/test.txt', 'r')
 for line in f:
-    if len(line.strip()) > 0:
+    if len(line.strip()) > 0:  #Takes only lines that are not empty
         print(line)
         
 f.close()

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 """Week 2 practical comprehension: use list comprehsensions and 
-loops to complete excersizes"""
+loops to complete exercises"""
+
 __author__ = 'Izie Wood (iw121@ic.ac.uk)'
 __version__ = '0.0.1'
 
@@ -23,7 +24,9 @@ rainfall = (('JAN',111.4),
 
 # (1) Use a list comprehension to create a list of month,rainfall tuples where
 # the amount of rain was greater than 100 mm.
+
 print("\nStep 1: List comprehensions\n")
+
 print("Months and rainfall where rainfall was greater than 100mm:")
 rainfall_100mm = [i for i in rainfall if i[1] > 100] # if after for since no else
 print(rainfall_100mm)

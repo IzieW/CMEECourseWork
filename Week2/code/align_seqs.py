@@ -10,75 +10,80 @@ __version__ = '0.0.1'
 ## imports ## 
 
 import sys
+import csv
 
 ## functions ##
-# Read sequences from csv file and append to list
-with open('../data/Example_seqs.csv', 'r') as f:
-    
-    sequences = [] # To be populated by lines in f
-    for row in f:
-        sequences.append(row)
-    
-# Assign sequences to variables
-# Assign the longer sequence s1, and the shorter to s2
-# l1 is length of the longest, l2 that of the shortest
-seq1 = sequences[0]
-seq2 = sequences[1]
+def get_sequences(path):
+    """Read sequences from csv file and append to list"""
+    with open(path, 'r') as f:
+        csvread = csv.reader(f)
+        sequences = []  # To be populated by lines in f
+        for row in csvread:
+            sequences.append(row)
+    return sequences  # Stores as list of list
 
-l1 = len(seq1)
-l2 = len(seq2)
-if l1 >= l2:
-    s1 = seq1
-    s2 = seq2
-else:
-    s1 = seq2
-    s2 = seq1
-    l1, l2 = l2, l1 # swap the two lengths
 
-# A function that computes a score by returning the number of matches starting
-# from arbitrary startpoint (chosen by user)
+def get_longer(sequences):
+    """Return the longer sequence from input list of sequences"""
+    if len(sequences[0][0]) >= len(sequences[1][0]):  # If the length of sequence 0 is greater...
+        return sequences[0][0]  # return sequence 0,
+    else:
+        return sequences[1][0]  # otherwise, return sequence 1
+
+
+def get_shorter(sequences):
+    """Return the shorter sequence from input list of sequences"""
+    if get_longer(sequences) == sequences[0][0]:  # Return whichever is not longer
+        return sequences[1][0]
+    else:
+        return sequences[0][0]
+
+
 def calculate_score(s1, s2, l1, l2, startpoint):
     """Computes score by returning number of matches between two sequences
     from starting point of user's choice"""
-    matched = "" # to hold string displaying alignements
+    matched = ""  # to hold string displaying alignements
     score = 0
     for i in range(l2):
-        if (i + startpoint) < l1: # Only if some part of sequences are aligned, hence seq2[i] + startpoint less than seq1 
-            if s1[i + startpoint] == s2[i]: # if the bases match
-                matched = matched + "*" # add asterix to matched
-                score = score + 1 # add one to score
+        if (i + startpoint) < l1:  # Only if some part of sequences are aligned, hence seq2[i] + startpoint less than seq1
+            if s1[i + startpoint] == s2[i]:  # if the bases match
+                matched = matched + "*"  # add asterix to matched
+                score = score + 1  # add one to score
             else:
-                matched = matched + "-" # if no match, add dash
+                matched = matched + "-"  # if no match, add dash
 
     return score
 
-# Test the function with some example starting points:
-# calculate_score(s1, s2, l1, l2, 0)
-# calculate_score(s1, s2, l1, l2, 1)
-# calculate_score(s1, s2, l1, l2, 5)
-
-# now try to find the best match (highest score) for the two sequences
 def main(argv):
-    """"Finds and saves best alignment and its score to text file"""   
+    """"Finds the best alignment and its score. Saves the results to a text file"""
     my_best_align = None
     my_best_score = -1
 
-    for i in range(l1): # Note that you just take the last alignment with the highest score,
-        z = calculate_score(s1, s2, l1, l2, i) # startpoint assigned for each number in longer sequence.
-        if z > my_best_score: # if z is greater than my best score
-            my_best_align = "." * i + s2 # reproduces winning alignment where starting point is argument in calculate_score
-            my_best_score = z 
+    sequences = get_sequences('../data/Example_seqs.csv')  # Load sequences from csv
+    s1 = get_longer(sequences)  # Assign longer to s1
+    s2 = get_shorter(sequences)
+    l1 = len(s1)
+    l2 = len(s2)  # get lengths
 
-# Saves best alignment and score to txt file 
+    # Find best alignment, update best score
+    for i in range(l1):  # Note that you just take the last alignment with the highest score,
+        z = calculate_score(s1, s2, l1, l2, i)  # startpoint assigned for each number in longer sequence.
+        if z > my_best_score:  # if z is greater than my best score
+            my_best_align = "." * i + s2  # reproduces winning alignment where starting point is argument in calculate_score
+            my_best_score = z
+
+    # Save results
     rf = "../results/align_seqs.txt"
     with open(rf, 'w') as r:
-        r.write(my_best_align)
-        r.write(s1)
-        r.write("Best score: "+ str(my_best_score) + '\n')
-    
-    print("Best alignment found!\nResults saved to:",rf)
-    return 0 
+        r.write(my_best_align + '\n')
+        r.write(s1 + '\n')
+        r.write("Best score: " + str(my_best_score) + '\n')
+
+    print("Best alignment found!\nResults saved to:", rf)
+    return 0
+
 
 if __name__ == "__main__":
+    """If called from console, run main argument"""
     status = main(sys.argv)
     sys.exit(status)

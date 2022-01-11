@@ -12,6 +12,6 @@ list_to_save = range(100)
 
 f = open('../results/testout.txt', 'w')
 for i in list_to_save:
-    f.write(str(i) + '\n') ## Add a new line at the end
+    f.write(str(i) + '\n')  # Add a new line at the end
 
 f.close()
