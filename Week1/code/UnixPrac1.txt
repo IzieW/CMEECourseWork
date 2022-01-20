@@ -1,5 +1,7 @@
 ## Author: Izie Wood iw121@ic.ac.uk
-## Fasta exercises from TheMulQuaBio ch.1: Unix and Linux
+## Date: Oct 2021
+## Answers to Fasta exercises from TheMulQuaBio: Unix and Linux
+
 
 #1 Count how many lines there are in each file 
 
@@ -12,16 +14,16 @@ tail -n +2 ../data/fasta/E.coli.fasta # using tail -n +2 to exclude first two li
 #3 Count the sequence length of this genome 
 # tr to remove newline characters before count
 
-tail -n +2 ../data/fasta/E.coli.fasta | tr -d "\n" | wc -m 
+tail -n +2 ../data/fasta/E.coli.fasta | tr -d "\n" | wc -m
 
 #4 Count the matches of a particular sequence, "ATGC" of the E. coli genome
 # grep -o produces matches in new lines, wc -l counts the lines
 
-tail -n +2 ../data/fasta/E.coli.fasta | tr -d "\n" | grep -o ATGC | wc -l 
+tail -n +2 ../data/fasta/E.coli.fasta | tr -d "\n" | grep -o ATGC | wc -l
 
 #5 Compute the AT/GC ratio
-# Assign variables for T, A, G, C counts. Create variables for AT, GC sums, and calculate AT/GC
-# Use scale=3 and bc to return output to three decimal points
-# printf to round off at second decimal point
+    # Assign variables for T, A, G, C counts. Create variables for AT, GC sums, and calculate AT/GC.
+    # Use scale=3 and bc to return output to three decimal points
+    # printf to round off at second decimal point
 
- T=`grep -o T < ../data/fasta/E.coli.fasta | wc -l`; A=`grep -o A < ../data/fasta/E.coli.fasta | wc -l`; G=`grep -o G < ../data/fasta/E.coli.fasta | wc -l`; C=`grep -o C < ../data/fasta/E.coli.fasta | wc -l`; AT=$(( $A + $T )); CG=$(( $C + $G )); ATR=$(printf %.2f $(echo "scale=3; $AT / $CG" | bc -l)); echo "The AT/GC ratio is $ATR:1"
+ T=`grep -o T < ../data/fasta/E.coli.fasta | wc -l`; A=`grep -o A < ../data/fasta/E.coli.fasta | wc -l`; G=`grep -o G < ../data/fasta/E.coli.fasta | wc -l`; C=`grep -o C < ../data/fasta/E.coli.fasta | wc -l`; AT=$(( $A + $T )); CG=$(( $C + $G )); ATR=$(printf %.2f $(echo "scale=3; $AT / $CG" | bc -l)); echo "The AT/GC ratio is $ATR"

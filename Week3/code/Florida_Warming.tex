@@ -1,33 +1,40 @@
 \documentclass[11pt]{article}
 \usepackage{graphicx}
+\usepackage[a4paper, total={6in, 8in}]{geometry}
+\usepackage{sectsty}
+\sectionfont{\large}
 \graphicspath{{../results/}}
 
+\title{\vspace{-3cm}\Large Increasing temperatures in the Florida Keys over the last century}
+\author{\vspace{-1cm}\normalsize Izie Wood}
+\date{\normalsize}
 \begin{document}
-
+\maketitle{\large}
+\vspace{-1cm}
+\section{Introduction}
+        The  increasing concentration of green house gases
+    in our atmosphere is understood to produce a warming effect. This paper studies a rise in temperature measured in the Florida keys 
+    over the last century, and finds a positive correlation between temperature increase
+    over time. Florida is getting warmer. 
+\section{Method}
+        Temperatures were recorded in Key West, Florida USA annually over the last century. 
+    To see the relationship between temperature over time, I conducted a permutation analysis, calculating the 
+    pearson's correlation coefficient between observed temperatures and years, and comparing 
+    it to a completely random distribution of correlation coefficients, obtained through
+    randomely shuffling the data over 5000 trials. 
 \section{Results}
-        There appeared to be a positive correlation between temperature and time, with a 
-        Pearson's correlation coefficient of 0.533. 
-        \begin{figure}[h]
-        \begin{center}
-            \includegraphics[scale=.30]{FloridaPlot}
-            \label{fig}
-        \end{center}
-        \end{figure}
-
-        To see the signficiance of this correlation, we compared the observed correlation
-        coefficient agaisnt a distribution of completely random correlation coefficients, 
-        achieved through reshuffling our data 5000 times. 
-        
+            Results revealed a moderate positive correlation between temperature and time
+        (r(98) = 0.53). Out of 5000 randomely generated correlation coefficients, none of them were 
+        greater than our observed correlation coefficient. Thus, the observed positive correlation between temperature and time has an 
+        approximate asymptotic p-value of 0.00.   
         \begin{figure}[ht]
         \begin{center}
-            \includegraphics[scale=0.25]{permutationplot}
+            \includegraphics[scale=0.30]{permutationplot}
         \end{center}
         \end{figure}
-
-        Out of 5,000 randomely generated correlation coefficients, none of them were 
-        greater than our observed correlation coefficient.
-        Thus, the observed positive correlation between temperature and time has an 
-        approximate asymptotic p-value of 0.00.
-        Florida is getting warmer. 
+\section{Conclusion}
+    Analysis conducted here suggests that Florida temperatures are increasing, likely
+    a result of the changing atmospeheric concentrations of green house gases. Florida is 
+    getting warmer.
 
 \end{document}

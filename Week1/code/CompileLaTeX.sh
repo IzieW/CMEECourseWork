@@ -1,12 +1,21 @@
-#!/bin/bash
-#
-if [ -z $1 ]; then # feedback if no argument is given. Exit.
-    echo "Error- Please give name of LaTeX file after the command"
+#!/usr/bin/bash
+# Author: Izie Wood (iw121@ic.ac.uk)
+# Desc: Script compiles input LaTeX document, cleans workspace and opens document
+# Arguments: 1 <- LaTeX file 
+# Date: Oct 2021
+
+# Check for valid arguments
+if [ -z $1 ]; then # feedback if no argument is given, throw error
+    echo "Error: Missing file to compile. Please give name of LaTeX file after the command"
     echo "ex: CompileLaTeX.sh FILE"
-    echo "Try again"
-    exit
+    exit 2
+elif [ ! -e $1 && ! -e $1.tex ]; then # if file doesn't exist (with or without extension)
+    echo "Error in $1: no such file or directory"
+    exit 2
 fi
-if [[ $1 == *".tex" ]]; then # Check if argument given ends in .tex
+
+#Compile document
+if [[ $1 == *".tex" ]]; then # If argument ends in .tex
 set -- ${1::-4} # If so, use set to edit argument, and parameter expansion to shave last four characters
 fi # if file given without .tex, no transformations needed
 
@@ -21,3 +30,7 @@ rm *.aux
 rm *.log
 rm *.bbl
 rm *.blg 
+
+echo -e "\nDone! Compiled script saved to $1.tex"
+
+exit 0  #Programme run successfully

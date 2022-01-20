@@ -27,15 +27,16 @@ TreeHeight <- function(degrees, distance){ #calculates tree height
 }
 
 # Use above function for each row in data frame, save to vector
-l <- length(CSTree[,1]) # column length/row numbers
-Col4 <- vector(,l) # preallocate vector 
+l <- length(CSTree[,1]) # column length
+Height <- vector(,l) # preallocate vector
+
 for (i in 1:l){
     TreeHts <- TreeHeight(CSTree[i,3], CSTree[i,2]) # Input degree/distance from dataframe
-    Col4[i] <- TreeHts
+    Height[i] <- TreeHts
 }
 ####### Save heights as CSV ################
 # Add heights to dataframe CSTree
-CSTree[4] <- Col4
+CSTree[4] <- Height
 colnames(CSTree)[4] <- "Height.m" # name column
 
 # Save dataframe to CSV

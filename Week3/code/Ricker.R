@@ -1,7 +1,6 @@
 #!/usr/bin/Rscript --vanilla
 # Author: Izie Wood
-# Desc: Script runs simulation of Ricker model
-# Returns a vector of generations
+# Desc: Runs simulation of Ricker model, returns a vector of generations
 # Date: Oct 2021
 
 Ricker <- function(N0=1, r=1, K=10, generations=50){

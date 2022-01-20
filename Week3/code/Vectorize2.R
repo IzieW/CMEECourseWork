@@ -1,14 +1,14 @@
 #!/usr/bin/Rscript --vanilla
 # Author: Izie Wood (iw121@ic.ac.uk)
 # Script: Vectorize2.R
-# Desc: Stochastic Ricker Model vectorized
+# Desc: Run Stochastic Ricker Model vectorized
 # Date: Oct 2021 
 
 # Runs the stochastic Ricker equation with gaussian fluctuations
 
-rm(list = ls())
+rm(list = ls())  # clear environment
 
-stochrick <- function(p0 = runif(1000, .5, 1.5), r = 1.2, K = 1, sigma = 0.2,numyears = 100)
+stochrick <- function(p0 = runif(1000, .5, 1.5), r = 1.2, K = 1, sigma = 0.2, numyears = 100)
 # runif 1000 random numbers from uniform .5, 1.5
 {
 

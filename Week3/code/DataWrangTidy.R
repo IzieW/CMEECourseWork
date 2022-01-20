@@ -3,9 +3,9 @@
 # Desc: Script wrangles data using tidyverse
 # Date: Oct 2021
 
-################################################################
-################## Wrangling the Pound Hill Dataset in Tidyverse ############
-################################################################
+###############################################
+# Wrangle the Pound Hill Dataset in Tidyverse #
+###############################################
 
 ########## Load tidyverse ###########
 require(tidyverse)
@@ -24,6 +24,7 @@ print("Data:")
 dplyr::glimpse(MyData)
 
 print("Wrangling data..")
+
 ############# Transpose ###############
 # To get those species into columns and treatments into rows 
 MyData <- t(MyData)

@@ -5,8 +5,8 @@
 # Arguments: None
 # Date: Oct 2021
 
-msg1="Hello"
-msg2=$USER # Take name of user, an environmental variable
+msg1="Hello"  # Assign msg1
+msg2=$USER  # Take name of user, an environmental variable
 echo "$msg1 $msg2"
 echo "Hello $USER"
-echo
+echo  #Print blank line
