@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Exercise using doctest tool to test function from control_flow.py"""
-# docstrings are considered part of the running code (normal comments are #stripped). Hence, you can access your docstrings at run time.
+"""Demonstrates use of doctests to test function from control_flow.py"""
+# docstrings are considered part of the running code (normal comments are #stripped). 
+# Hence, you can access your docstrings at run time.
 
 __appname__ = '[test_control_flow.py]'
 __author__ = 'Izie Wood (iw121@ic.ac.uk)'
 __version__ = '0.0.1'
-__license__ = "License for this code/program"
 
 ## imports ##
 import sys  # module to interface our programes with the operating system
@@ -47,7 +47,7 @@ def main(argv):
 
 
 if (__name__ == "__main__"):
-    """If called from command line, run function main()"""
+    # If called from command line, run function main()
     status = main(sys.argv)
 
 doctest.testmod()  # To run with embedded tests

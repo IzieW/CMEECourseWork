@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 
-"""Week 2 practical comprehension: Write list comprehensions and for loops
-to complete exercises on data set"""
+"""
+Week 2 practical comprehension: Using list comprehensions and 
+foor loops, this script creates lists containing only
+latin names, common names and mean body masses for each 
+species in birds, and prints results. 
+"""
+
 __author__ = 'Izie Wood (iw121@ic.ac.uk)'
 __version__ = '0.0.1'
 
@@ -12,15 +17,15 @@ birds = (('Passerculus sandwichensis', 'Savannah sparrow', 18.7),
          ('Tachycineata bicolor', 'Tree swallow', 20.2),
          )
 
-# (1) Write three separate list comprehensions that create three different
+#(1) Write three separate list comprehensions that create three different
 # lists containing the latin names, common names and mean body masses for
 # each species in birds, respectively. 
 
-print("\nStep 1: list comprehensions\n")
+print("\nStep 1: list comprehensions")
 
 print("Latin names:")
 # List comprehension for latin names 
-latin_names = [i[0] for i in birds]
+latin_names = [i[0] for i in birds]  # For each tuple, take first value in tuple
 print(latin_names, "\n")
 
 print("Common names:")
@@ -35,7 +40,7 @@ print(body_mass, "\n")
 
 # (2) Now do the same using conventional loops (you can choose to do this 
 # before 1 !). 
-print("Step 2: Conventional loops\n")
+print("Step 2: Conventional loops")
 
 print("Latin names:")
 # Conventional loop for latin names 

@@ -1,30 +1,31 @@
 #!/usr/bin/env python3
 
-"""Some functions exemplifying the use of control statements"""
+"""
+Example of python program that uses various control flows. Contains a series of functions 
+that manipulate variables in given ways. When called from command line, program runs functions
+with various test values and prints results.
+"""
 __author__ = 'Izie Wood (iw121@ic.ac.uk)'
 __version__ = '0.0.1'
 
 ## imports ##
 import sys  # module to interface our programmes with the operating system
 
-
-## constants ##
-
 ## functions ##
 def even_or_odd(x=0):  # if not specified, x should take value 0.
 
-    """Find whether a number x is even or odd."""
-    if x % 2 == 0:  # The conditional if
-        return "%d is Even!" % x
+    """Find whether an input number is even or odd."""
+    if x % 2 == 0:  # If input is divisble by 2...
+        return "%d is Even!" % x  #%d used to format returned value as decimal
     return "%d is Odd!" % x
 
 
-def largest_divisor_five(x=120):
-    """Find which is the largest divisor of x amoung 2, 3, 4, 5."""
+def largest_divisor_five(x=120):  #default to 120
+    """Find which is the largest divisor of input value amoung 2, 3, 4, 5."""
     largest = 0
     if x % 5 == 0:
         largest = 5
-    elif x % 4 == 0:
+    elif x % 4 == 0:  # "else if"
         largest = 4
     elif x % 3 == 0:
         largest = 3
@@ -36,7 +37,7 @@ def largest_divisor_five(x=120):
 
 
 def is_prime(x=70):
-    """Find whether an integer is prime."""
+    """Find whether input number is prime."""
     for i in range(2, x):  # "range" returns a sequence of integers
         if x % i == 0:
             print("%d is not a prime: %d is a divisor" % (x, i))
@@ -46,7 +47,7 @@ def is_prime(x=70):
 
 
 def find_all_primes(x=22):
-    """Find all the primes up to x"""
+    """Find all the primes numbers within input range"""
     allprimes = []
     for i in range(2, x + 1):
         if is_prime(i):
@@ -56,7 +57,8 @@ def find_all_primes(x=22):
 
 
 def main(argv):
-    """Input and print results of functions above"""
+    """Main entry points of argument.
+    Call above functions with test inputs, and print results."""
     print(even_or_odd(22))
     print(even_or_odd(33))
     print(largest_divisor_five(120))
@@ -67,7 +69,7 @@ def main(argv):
     return 0
 
 
-if (__name__ == "__main__"):
-    """Run main function if called from command line"""
+if __name__ == "__main__":
+    # Run main function when called from command line
     status = main(sys.argv)
     sys.exit(status)

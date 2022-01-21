@@ -1,5 +1,5 @@
 #!/usr/bin/env Python3 
-"""Example script to run"""
+"""Example script to run. Illustrates use of function in python"""
 __author__ = 'Izie Wood (iw121@ic.ac.uk)'
 
 ## functions ##

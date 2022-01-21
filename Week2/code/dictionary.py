@@ -23,7 +23,7 @@ def make_dictionary(taxa):
     """Organise input list of taxa into dictionary of order names and sets of taxa"""
     taxa_dic = {}  # create empty dictionary
     for x in taxa:  # for each order name in list, populate set of taxa
-        taxa_dic[x[1]] = set([y[0] for y in taxa if y[1] == x[1]])
+        taxa_dic[x[1]] = set([y[0] for y in taxa if y[1] == x[1]]) # append all names that match dictionary key
 
     return taxa_dic
 

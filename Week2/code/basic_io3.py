@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-"""Script illustrating how to store objects in files and
-later reopen them"""
+"""Stores dictionary to file, then reloads it using pickle"""
+
 __author__ = 'Izie Wood (iw121@ic.ac.uk)'
 __version__ = '0.0.1'
 
@@ -13,13 +13,16 @@ my_dictionary = {"a key": 10, "another key": 11}
 
 import pickle
 
-f = open('../sandbox/testp.p', 'wb')  # note the b: accept binary files
-pickle.dump(my_dictionary, f)
+f = open('../results/testp.p', 'wb')  # wb - "write binary"
+pickle.dump(my_dictionary, f)  # save to file f
 f.close()
+
+print("Dictionary saved to ../results/testp.p")
 
 ## Load the data again
-f = open('../sandbox/testp.p', 'rb')
-another_dictionary = pickle.load(f)
+print("Loading .../results/testp.p...")
+f = open('../results/testp.p', 'rb')  # read binary
+another_dictionary = pickle.load(f)  ## Assign data from f to another_dictionary
 f.close()
 
-print(another_dictionary)
+print("Loaded dictionary is: ", another_dictionary)

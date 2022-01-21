@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 
-"""Week 2 practical comprehension: use list comprehsensions and 
-loops to complete exercises"""
+"""
+Week 2 practical comprehension: use list comprehsensions and 
+loops to create tuple of months and rainfall where rainfall was greater
+than 100mm, and another tuple where rainfall was less than 50mm.
+Print results.
+"""
 
 __author__ = 'Izie Wood (iw121@ic.ac.uk)'
 __version__ = '0.0.1'
@@ -25,29 +29,29 @@ rainfall = (('JAN',111.4),
 # (1) Use a list comprehension to create a list of month,rainfall tuples where
 # the amount of rain was greater than 100 mm.
 
-print("\nStep 1: List comprehensions\n")
+print("\nStep 1: List comprehensions")
 
 print("Months and rainfall where rainfall was greater than 100mm:")
-rainfall_100mm = [i for i in rainfall if i[1] > 100] # if after for since no else
+rainfall_100mm = [i for i in rainfall if i[1] > 100] # if any second place in rainfall is greater than 100, add to list
 print(rainfall_100mm)
  
 # (2) Use a list comprehension to create a list of just month names where the
 # amount of rain was less than 50 mm. 
-print("\nStep 2: List comprehensions\n")
+print("\nStep 2: List comprehensions")
 print("Months where rainfall was less than 50mm:")
 months_50mm = [i[0] for i in rainfall if i[1] < 50]
 print(months_50mm)
 
 # (3) Now do (1) and (2) using conventional loops (you can choose to do 
 # this before 1 and 2 !). 
-print("\nStep 3: Conventional loops\n")
+print("\nStep 3: Conventional loops")
 
 # Months + rainfall where rainfall was greater than 100mm
 print("Months and rainfall where rainfall was greater than 100mm:")
 rainfall_100mm = []
 for i in rainfall: 
     if i[1] > 100:
-        rainfall_100mm.append(i)
+        rainfall_100mm.append(i) # append tuple
 
 print(rainfall_100mm)
 

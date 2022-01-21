@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """A program that takes DNA sequences as an input from a single external file 
-and saves the best alignment along with its score in a new text file"""
+and saves the best alignment along with its score to a new text file"""
 
 __appname__ = '[align_seqs.py]'
 __author__ = 'Izie Wood (iw121@ic.ac.uk)'
@@ -40,8 +40,9 @@ def get_shorter(sequences):
 
 
 def calculate_score(s1, s2, l1, l2, startpoint):
-    """Computes score by returning number of matches between two sequences
-    from starting point of user's choice"""
+    """Computes score by returning number of matches between sequences s1
+    and s2 (where s1 is longer and s2 is shorter, and l1 and l2 are their respective lengths)
+    from startpoint of user's choice."""
     matched = ""  # to hold string displaying alignements
     score = 0
     for i in range(l2):
@@ -54,11 +55,15 @@ def calculate_score(s1, s2, l1, l2, startpoint):
 
     return score
 
-def main(argv):
-    """"Finds the best alignment and its score. Saves the results to a text file"""
-    my_best_align = None
-    my_best_score = -1
 
+def main(argv):
+    """"Loads sequences from file. 
+    Finds the best alignment and its score. 
+    Saves the results to a text file"""
+    my_best_align = None  # set starting values
+    my_best_score = -1  # set as >0 to ensure any number of matches is greater
+
+    # Get sequence data
     sequences = get_sequences('../data/Example_seqs.csv')  # Load sequences from csv
     s1 = get_longer(sequences)  # Assign longer to s1
     s2 = get_shorter(sequences)

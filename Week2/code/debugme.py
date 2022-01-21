@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 
-"""Buggy function to run pdb on"""
+"""
+Expanded buggy function that uses try and except key words to 
+anticipate errors in program, and allow code to run despite them
+"""
 __author__ = 'Izie Wood (iw121@ic.ac.uk)'
 __version__ = '0.0.1'
 
 
 def buggyfunc(x):
-    """Function to debug"""
+    """Manipulates variales of input range.
+    Catches errors without stopping function"""
     y = x
     for i in range(x):
         try:
@@ -21,4 +25,4 @@ def buggyfunc(x):
     return z
 
 
-buggyfunc(20)
+buggyfunc(20)  # call function

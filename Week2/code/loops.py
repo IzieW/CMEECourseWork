@@ -4,7 +4,7 @@
 __author__ = 'Izie Wood (iw121@ic.ac.uk)'
 __version__ = '0.0.1'
 
-# for loops 
+# FOR loops 
 for i in range(5):
     print(i)  # prints sequence 1-5
 
