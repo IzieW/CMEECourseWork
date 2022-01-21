@@ -7,11 +7,11 @@ As guided by [TheMulQuaBio](https://mhasoba.github.io/TheMulQuaBio/notebooks/), 
 ## Languages
 All code in this repository was written in Python 3.8.10.
 
-## Structure and Usage 
-This respository contains three directories: 'code', 'data', 'results'. All scripts and code files are located in code. Appropriate files for which to run scripts on can be found in 'data', and all output script files will be saved to 'results'
-
 ## Dependencies
 No extraneous packages or modules are needed to run the scripts in this repository.
+
+## Structure and Usage 
+This respository contains three directories: 'code', 'data', 'results'. All scripts and code files are located in code. Appropriate files for which to run scripts on can be found in 'data', and all output script files will be saved to 'results'
 
 ### Code
 The code repository contains a series of Python3 scripts and programmes for independent and group work practicals in Week2. They can all be run from the bash command line, or from within iPython3.
