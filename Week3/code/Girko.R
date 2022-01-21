@@ -25,7 +25,7 @@ eigDF <- data.frame("Real" = Re(eigvals), "Imaginary" = Im(eigvals)) # build a d
 
 my_radius <- sqrt(N)
 
-ellDF <- build_ellipse(my_radius, my_radius) # Dataframe to plot ellipse
+ellDF <- build_ellipse(my_radius, my_radius) # Data frame to plot ellipse
 
 names(ellDF) <- c("Real", "Imaginary") # rename columns
 
@@ -48,5 +48,4 @@ p
 pdf("../results/Girko.pdf")
 print(p)
 dev.off() # close file
-
-
+print("Done! File saved to ../results/Girko.pdf")

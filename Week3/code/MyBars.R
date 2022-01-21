@@ -53,3 +53,5 @@ p <-p + scale_x_continuous("My x axis",
 pdf("../results/MyBars.pdf")
 print(p)
 dev.off()
+
+print("Done! Results saved to ../results/MyBars.pdf")

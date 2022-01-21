@@ -4,12 +4,13 @@
 # Date: Oct 2021
 
 i <- 0 # Initialize i 
-    while(i < Inf){
-        if (i == 10) { 
+    while(i < Inf){  # While i is less than infinity... so forever
+        if (i == 10) {  # When i = 10, break from loop
             break
-        } # Break out of the while loop
+        }
         else {
             cat("i equals", i, "\n")
             i <- i + 1 # Update i
         }
     }
+print("Loop finsihed!")

@@ -1,6 +1,6 @@
 #!/usr/bin/Rscript --vanilla 
 # Author: Izie Wood (iw121@ic.ac.uk)
-# Desc: A boilerplate Rscript
+# Desc: Demonstrates use of functions and arguments in R
 # Date: Oct 2021
 
 MyFunction <- function(Arg1, Arg2){

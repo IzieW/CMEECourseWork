@@ -45,3 +45,5 @@ p
 pdf("../results/MyLinReg.pdf")
 print(p)
 dev.off()
+
+print("Done! Results saved to ../results/MyLinReg.pdf")

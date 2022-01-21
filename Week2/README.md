@@ -139,4 +139,5 @@ All group work files (`align_seqs_fasta.py` `align_seqs_better.py`, and `group_o
 
 ## Author name and contact
  Izie Wood
+ 
  iw121@ic.ac.uk

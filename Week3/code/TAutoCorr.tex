@@ -1,0 +1,48 @@
+\documentclass[12pt]{article}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage[left=2cm,right=2cm]{geometry}
+\usepackage[font=scriptsize]{caption}
+\graphicspath{{../results/}}
+
+\begin{document}
+
+\section*{\large \centering Are temperatures of one year significantly correlated with the next year 
+(successive years), across years in a given location?}
+
+
+The observed correlation coefficient between years and temperature(degree celsius) of Florida was
+0.326. (Figure \ref{fig:mesh1}).
+
+After random sampling our temperature data by \textit{N=10000} and recalculating the correlation coefficient,
+our observed correlation coefficient was within the distribution of our random correlation
+coefficients, but it was different to the mean (p=$4\times10^{-4}$) (Figure \ref{fig:mesh2}).
+
+This suggest that there is a 
+statistically significant moderate correlation between measured temperatures in adjacent years. This
+allows us to conclude that there is significant auto-correlation in the data. As a result, we are
+not able to draw conclusions about this data using statistical techniques that assume the data is
+independent and identically distributed. Instead, we would need to use other techniques that can
+handle dependence within the data.
+
+In conclusion, there is a significant correlation between temperatures in successive years in a
+given location, namely Florida.
+
+
+\begin{figure}[H]
+  \begin{minipage}{.45\textwidth}
+        \includegraphics[width=.8\linewidth]{graph.pdf}
+        \centering
+        \caption{This graph demonstrates the annual temperatures from Key West in Florida, USA for the 20th century}
+        \label{fig:mesh1}
+  \end{minipage}%
+  \begin{minipage}{.5\textwidth}
+        \includegraphics[scale=.35]{graph2.pdf}
+        \centering
+        \caption{The distribution of random correlation coefficent calculated from reshuffling the temperatures. The observed correlation coefficent is represented by the trendline.}
+        \label{fig:mesh2}
+  \end{minipage}
+\end{figure}
+
+\end{document}
+

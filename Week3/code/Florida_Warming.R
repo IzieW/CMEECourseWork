@@ -12,17 +12,6 @@
 # Load in data
 load("../data/KeyWestAnnualMeanTemperature.RData", verbose= TRUE) # ats
 
-scatter_plot <- function(ats) {
-  # Make scatter plot of data, save to file
-pdf("../results/FloridaPlot.pdf", 11.7, 8.3)  # open file
-plot(ats, xlab = "Years", ylab = "Temperature (C)", 
-     main = "Key West temperatures over time",
-     cex.lab = 1.5, cex.main = 1.5)
-graphics.off()
-}
-
-scatter_plot(ats)  # Run function
-
 #### Calculate correlation coefficient ###
 # Save correlation coefficient of observed data
 observed_cor <- cor(ats$Year, ats$Temp)  # Correlation coefficient of observed data
@@ -55,13 +44,13 @@ plot_permutation <- function(ats, observed_cor) {
   
   # plot results
   pdf("../results/Permutation_results.pdf", 11.7, 8.3) # open pdf
-    plot(random_cor, dnorm(random_cor, mean(random_cor), sd(random_cor)), 
-     xlim=c(-0.55, 0.55), xlab = "Correlation coefficients of random samples",
+    hist(random_cor, 
+     xlim=c(-0.65, 0.65), xlab = "Correlation coefficients of random samples",
      ylab = "Frequency", main="Distribution of random correlation coefficients", cex.lab=1.5, cex.main=1.5) # plot covariance of random samples
 
-    abline(v=observed_cor, lwd=2, col = "red") # add line for observed covariance
-    text(0.40, 3, "Observed", col = "red", cex=2) #label 
-    graphics.off() # close pdf
+    abline(v=observed_cor, lwd=2, lty = 3, col = "red") # add line for observed covariance
+    text(0.35, 800, "Observed correlation\n coefficient", col = "red", cex=1.5) #label 
+   graphics.off() # close pdf
     
     cat("Permutation analysis finished,\nresults saved to ../results/Permutation_results.pdf")
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/Rscript --vanilla
 # Author: Izie Wood (iw121@ic.ac.uk)
 # Script: Vectorize2.R
-# Desc: Run Stochastic Ricker Model vectorized
+# Desc: Re-write stochastic Ricker equation to make better vectorized
 # Date: Oct 2021 
 
 # Runs the stochastic Ricker equation with gaussian fluctuations
@@ -27,6 +27,8 @@ stochrick <- function(p0 = runif(1000, .5, 1.5), r = 1.2, K = 1, sigma = 0.2, nu
   }
  return(N)
 }
+print("Pre-allocated model takes:")
+print(system.time(res2<-stochrick()))
 
 # Now write another function called stochrickvect that vectorizes the above to
 # the extent possible, with improved performance: 

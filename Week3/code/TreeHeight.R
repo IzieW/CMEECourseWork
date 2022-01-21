@@ -1,48 +1,31 @@
 # Author: Izie Wood (iw121@ic.ac.uk)
 # Script: TreeHeight.R
-# Desc: Calculates Tree height from distance and degree. 
-# Loads data from CSV
-# Creates csv output file containing original data and Tree height
-#
+# Desc: Loads tree data from CSV and calculates heights. 
+# Writes results to csv file containing all original tree data and heights.
 # Date: Oct 2021
 
+## Imports ##
+require(tidyverse)
 
-######## Load CSV file to data frame #########
-CSTree <- (read.csv("../data/trees.csv")) # pun of csv
-
-####### Calculate tree height ##########
-# # This function calculates the heights of trees given distance fo each tree
-# from its base and angle to its top, using the trionometric formula
-# 
-# height = distance * tan(radians)
-#
-# ARGUMENTS
-# degrees: The angle of elevation of the tree
-# distance: The distance from the base of the tree (e.g., meters)
-
-TreeHeight <- function(degrees, distance){ #calculates tree height
+## Functions ##
+# load data
+tree.data <- as.data.frame(read.csv("../data/trees.csv")) # Load as df
+  
+get_height <- function(degrees, distance){ 
+  # Calculates the heights of trees given distance fo each tree
+  # from its base and angle to its top, using the trigonometric formula
     radians <- degrees * pi / 180 
     height <- distance * tan(radians)
-    return(height)
+    return(height)  # returns height
 }
 
-# Use above function for each row in data frame, save to vector
-l <- length(CSTree[,1]) # column length
-Height <- vector(,l) # preallocate vector
+# Get heights for tree data
+# Create Height.m column as product of get_height using Angle and distance
+tree.data <- tree.data %>% mutate(Height.m = get_height(Angle.degrees, Distance.m))
 
-for (i in 1:l){
-    TreeHts <- TreeHeight(CSTree[i,3], CSTree[i,2]) # Input degree/distance from dataframe
-    Height[i] <- TreeHts
-}
-####### Save heights as CSV ################
-# Add heights to dataframe CSTree
-CSTree[4] <- Height
-colnames(CSTree)[4] <- "Height.m" # name column
-
-# Save dataframe to CSV
-Location <- "../results/TreeHts.csv"
-write.csv(CSTree, Location)
+# Save data to CSV
+location <- "../results/TreeHts.csv"
+write.csv(tree.data, location)
 
 # Update user
-print("Calculating tree heights...")
-print(paste("Done! File saved to:", Location))
+cat("Done! File saved to:", location)

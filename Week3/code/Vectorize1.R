@@ -6,9 +6,10 @@
 M <- matrix(runif(1000000),1000,1000)
 
 sumALLElements <- function(M){
+  # Sum input matrix values using nested loops (non-vectorised)
     Dimensions <- dim(M)
     Tot <- 0
-    for (i in 1:Dimensions[1]){
+    for (i in 1:Dimensions[1]){ # Parses all rows of all columns
         for (j in 1:Dimensions[2]){
             Tot <- Tot + M[i,j]
         }

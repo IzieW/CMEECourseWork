@@ -5,14 +5,14 @@
 
 # Checks if an integer is even
 is.even <- function(n = 2){
-    if (n %% 2 == 0)
+    if (n %% 2 == 0)  # if n is divisible by two...
     {
         return(paste(n,'is even!'))
     }
     return(paste(n,'is odd!'))
 }
 
-is.even(6)
+print(is.even(6)) # run when sourced
 
 # Checks if a number is a power of two
 is.power2 <- function(n = 2){
@@ -23,7 +23,7 @@ is.power2 <- function(n = 2){
     return(paste(n, "is not a power of 2!"))
 }
 
-is.power2(4)
+print(is.power2(4))
 
 # Checks if a number is prime
 is.prime <- function(n){
@@ -40,4 +40,4 @@ is.prime <- function(n){
     return(paste(n,'is a composite!'))
 }
 
-is.prime(3)
+print(is.prime(3))

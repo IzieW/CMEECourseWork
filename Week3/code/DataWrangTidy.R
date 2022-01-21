@@ -1,11 +1,7 @@
 #!/usr/bin/Rscript --vanilla
 # Author: Izie Wood (iw121@ic.ac.uk)
-# Desc: Script wrangles data using tidyverse
+# Desc: Wrangle data using tidyverse
 # Date: Oct 2021
-
-###############################################
-# Wrangle the Pound Hill Dataset in Tidyverse #
-###############################################
 
 ########## Load tidyverse ###########
 require(tidyverse)

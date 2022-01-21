@@ -29,6 +29,5 @@ world.map <- world.map + geom_point(data = gpdd, aes(x = long, y = lat),
 
 print(world.map)
 
-## data here seems heavily biased towards locations in the global
-# north. Likely as a result of accessibility. This omits citings in large 
-# parts of the world. 
+print("What biases might you expect in any analysis based on the data represented?")
+cat("Data seems heavily biased towards locations in the global north. Likely as a result of accessibility. This skews population dynamics data toward those species and biomes located in the global north, which is not likely to be representative of the entire world.")

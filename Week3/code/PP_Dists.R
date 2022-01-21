@@ -57,7 +57,7 @@ graphics.off() # close file
 Size.ratio <- vector("numeric", length(MyDF$Prey.mass)) # pre-allocate
 
 ratio <- function(i){ # function to calculate size ratio
- MyDF$Prey.mass[i]/MyDF$Predator.mass[i]
+  MyDF$Prey.mass[i]/MyDF$Predator.mass[i]
 }
 
 Size.ratio <- sapply(1:length(MyDF$Prey.mass), function(i) ratio(i)) #apply function for each row in MyDF
@@ -99,8 +99,8 @@ MMDF <- function(i, n){
   if (n == 2 & i == "predacious/piscivorous"){ # for first run, make new DF
     mainDF <<- data.frame(Sample, Type.of.feeding.interaction, Mean, Median)
   } else { #then, append to existing DF
-  DFn <- data.frame(Sample, Type.of.feeding.interaction, Mean, Median)
-  mainDF <<- rbind(mainDF, DFn)
+    DFn <- data.frame(Sample, Type.of.feeding.interaction, Mean, Median)
+    mainDF <<- rbind(mainDF, DFn)
   }
 } 
 # Apply function to interaction types, repeat for numbers 2, 3, 4
