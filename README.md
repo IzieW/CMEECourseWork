@@ -1,4 +1,4 @@
-#My CMEE Coursework Repository
+# My CMEE Coursework Repository
 
 This repository contains all my coursework and practicals from every Week in CMEE so far. All practicals and data here are taken from and guided by [TheMulQuaBio](https://mhasoba.github.io/TheMulQuaBio/intro.html)
 
