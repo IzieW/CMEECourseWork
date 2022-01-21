@@ -44,11 +44,11 @@ source("R_conditionals.R")
 ```
 source("TreeHeight.R")
 ```
--`get_TreeHeight.R` - Group Work practical. Same as `TreeHeight.R` except this script takes optional input files from command line and writes to file whose name includes the input filename.
+- `get_TreeHeight.R` - Group Work practical. Same as `TreeHeight.R` except this script takes optional input files from command line and writes to file whose name includes the input filename.
 ```
 Rscript get_TreeHeight.R [FILE.CSV]
 ```
--`get_TreeHeight.py` - Group Work practical. Script does the same thing as `TreeHeight.R` but is written in python3. 
+- `get_TreeHeight.py` - Group Work practical. Script does the same thing as `TreeHeight.R` but is written in python3. 
 ```
 python3 get_TreeHeight.py [FILE.CSV]
 ```
@@ -166,5 +166,5 @@ All group work files (`get_TreeHeight.R`, `get_TreeHeight.py`, `run_get_TreeHeig
 
 ## Author name and contact
  Izie Wood
- 
+
  iw121@ic.ac.uk

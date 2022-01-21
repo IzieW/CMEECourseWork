@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Script to test profiling"""
+"""Script to test profiling. 
+Three functions that manipulate range of variables."""
 
 __author__ = "Izie Wood (iw121@ic.ac.uk)"
 

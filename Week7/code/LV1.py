@@ -62,5 +62,7 @@ p.title('Consumer-Resource population dynamics')
 
 ## save figures to pdf 
 f1.savefig('../results/LV_model.pdf')
-f2.savefig('../results/LV_model1.pdf')
+print("Done! Figure1 saved to ../results/LV_model.pdf")
+f2.savefig('../results/LV_model2.pdf')
+print("Figure2 saved to ../results/LV_model2.pdf")
 
