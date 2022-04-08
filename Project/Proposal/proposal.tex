@@ -1,0 +1,102 @@
+\documentclass{article}
+
+
+\usepackage[utf8]{inputenc}
+\usepackage[a4paper, margin=2cm]{geometry}
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{setspace}
+\onehalfspacing
+
+\title{Robustness of Lenia cellular automata in increasingly complex environments}
+\author{Izie Wood}
+\date{April 2022}
+
+\begin{document}
+\linespread{1.25}
+\maketitle
+\centering\textbf{Supervised by:}
+
+\vspace{0.5cm}
+
+\centering\text{Dr. Bhavin Khatri}
+
+\vspace{0.5cm}
+
+\centering\text{Professor Murray Shanahan}
+
+\newpage
+
+\textbf{}
+
+\section{Keywords}
+Artificial Intelligence, Microbial life, Individuality, Evolution, Machine Learning, Cognition. 
+
+\section{Project Idea and proposed questions}
+The proposed project aims to explore the relationship between environmental complexity and system robustness in Lenia artificial life forms. 
+
+    \subsection{Lenia}
+    Lenia defines a class of continuous cellular automata (CA) developed by Bert Chan which comprises an n-dimensional (near continuous) grid space, where each cell in the grid can take on any value between [0:1]. At every time step t, each cell in the grid is updated according to the values of other cells in its defined “neighborhood”. Given the correct parameters and initial configurations, stable localized patterns emerge with properties qualitatively and statistically similar to microbial life. 
+
+Hundreds of these artificial “life forms” have been discovered in Lenia simply through random searching of parameters and initial conditions, and much work has gone into categorizing them into rich taxonomies based on their parameters, morphology and behaviours \cite{chan2018lenia}.
+    
+    \subsection{Cognitive science, life and individuality}
+    “Individuality” is a central concept in theoretical biology and cognitive science.  The enactive framework in cognitive science proposes concepts of individuality,  agency, and life are all one in the same: all three are characterized by a given organization of processes that is able to act in a cohesive way to maintain their collective preservation \cite{varela2017embodied}.
+
+Cellular automata  demonstrate how complex systems with distinctive macro-properties can emerge from lower-level interactions governed by simple rules. The emergent entities are qualitatively and statistically distinct from other elements in the environment, despite being made of the same cells. As such, they are of interest to areas in cognitive science and origins of life, which ask how living systems, capable of acting on and responding flexibly to their environment, emerge from purely non-living matter. 
+
+\subsection{System robustness and environmental complexity}
+One theory, is that living things emerge as individual entities in virtue of interactions with their environment. A given emergent organization has various conditions of viability that make an environment more or less conducive to its survival. This creates an  asymmetry between the system and its environment: the environment is defined \emph{for} the system in virtue of its needs \cite{di2018enactive} . 
+
+Traditionally, Lenia life forms exist in neutral environments. They emerge from a random “soup” of  particles, and exist for a given number of time steps until they are thrown out of equilibrium and dissolve. While non-living particles and various life forms can all exist in a grid simultaneously, their interactions are under-determined, having no fixed outcomes. 
+
+Hamon et. al. recently developed a way of modeling “obstacles” in the Lenia environment which interact with cells in a controlled way: any cell that overlaps with an obstacle dies \cite{hamon:hal-03519319}. Using a two-part optimization algorithm of gradient descent and curriculum learning, they were able to create life forms capable of navigating obstacles where previous automata would simply dissolve. Though the optimization process only selected for successful navigation from A to B through an obstacle course, they found trained life forms seemed much more robust afterwards- surviving for much longer periods of time in a neutral environment. 
+
+\subsection{The project}
+My project proposes to investigate the relationship between robustness of an artificial life forms in Lenia and the complexity of their environment.  Here, environmental complexity will be a measure of obstacle density in a given environment, and how robust a given life form is will be measured in terms of how far parameters can be varied without the life forms dissolving. The project aims to probe whether selection pressures and adaptation to the environment encourage systems robustness or "individuality" more generally.
+
+\section{Proposed Methods}
+Hamon et. al. have published their methods for modelling obstacles in a Lenia. Using these, as well as Bert Chan’s resources for running Lenia, I will simulate my own Lenia environment with different obstacle configurations ranging from more to less complex. 
+
+Starting with a given stable life form (or “species”- the initial conditions/parameters for which are documented on Bert Chan’s github), I will train the life forms on a series of increasingly complex environments, measuring their robustness before and after. 
+
+I will measure robustness by varying the parameters of a given species and seeing how far the configuration can be pushed before it dissolves. More robust life forms will be able to recover from a larger range of slight parameter tweaks. 
+
+“Training” a life form on a given configuration will consist of finding the correct parameter solutions to produce life forms capable of nagivating the environment. The exact training method is yet to be decided, but candidates include:
+
+	a) Manual simulation of many life forms in a given environment and picking out those able to survive for the longest amount of time. This gives the benefit of evolutionary credibility, but loses out on generalization. 
+	
+	b)  Use of machine learning tecniques as in Gautier et. al. to find those parameters which successfully produce a life forms capable of navigating/surviving in the environment.  These have been shown to produce life forms with generalisable behaviours and use of curriculumn learning algorithms and gradient descent would eliminate the need to manually test each configuration of parameters in a given range. However, these methods (if done correctly) aim to find an optimal solution, which is not as representative of an evolutionary process. 
+
+c) Use of an evolutionary algorithm where life forms are generated and the ones who perform best are  “bred” until a solution is reached. This method was only recently suggested and more research is needed. 
+
+\section{Anticipated outputs and outcomes}
+Over these simulations, I hope to come by a stable measure of how training impacts robustness of a system (taken from measures of robustness before and after training), as well as data on how robustness changes according to environmental complexity. 
+
+\section{Project timeline}
+
+\begin{tabular}{|c|c|c|c|c|c|}
+\hline
+    & April & May & June & July & August \\
+\hline 
+    Identify methods and measures & \cellcolor{blue!25} & &&&\\
+\hline
+    Build environment & \cellcolor{blue!25} & \cellcolor{blue!25}&&& \\
+\hline
+    Run initial simulations &&\cellcolor{blue!25}&\cellcolor{blue!25}&& \\
+\hline
+Analyse preliminary results &&&\cellcolor{blue!25}&& \\
+\hline
+First draft written &&&&\cellcolor{blue!25}& \\
+\hline
+Designated period for error/&&&&\cellcolor{blue!25}&\cellcolor{blue!25} \\
+investigating new configurations based on initial results &&&&\cellcolor{blue!25}&\cellcolor{blue!25} \\
+\hline
+Final draft written &&&&&\cellcolor{blue!25} \\
+\hline
+\end{tabular}
+
+\bibliographystyle{plain}
+\bibliography{biblio}
+
+\end{document}
