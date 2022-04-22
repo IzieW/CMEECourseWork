@@ -69,7 +69,7 @@ def update(i):
 fig = figure_world(A, cmap="binary")  # Initiate figure world
 
 anim = animation.FuncAnimation(fig, update, frames=50, interval=100)
-anim.save("gol_test_new.gif", writer="imagemagick")
+anim.save("results/gol_test_new.gif", writer="imagemagick")
 
 ## 2. CONVOLUTION WITH KERNEL
 """Extend original game of life by generalising the system.
@@ -93,7 +93,7 @@ def update_ext(i):
 
 fig = figure_world(A, cmap="binary")
 anim = animation.FuncAnimation(fig, update_ext, frames=50, interval=100)
-anim.save("gen_gol.gif", writer="imagemagick")
+anim.save("results/gen_gol.gif", writer="imagemagick")
 
 ## 3. INCREMENTAL UPDATE WITH GROWTH
 """Use incremental update by growth function instead of a conditional update. 
