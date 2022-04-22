@@ -1,6 +1,6 @@
 *~ 
 *.tmp
-sandbox/
+Week*/sandbox/
 .ignore
 __pycache__
 .Rhistory
