@@ -63,8 +63,6 @@ def update(i):
     img.set_data(A)  # Grid space img with array
     return img,
 
-    A_blank = np.zeros_like(A)
-
 
 fig = figure_world(A, cmap="binary")  # Initiate figure world
 
@@ -79,7 +77,7 @@ size = 64
 np.random.seed(0)
 A = np.random.randint(2, size=(size, size))  # Initiate grid
 K = np.ones((3, 3))
-K[1, 1] == 0
+K[1, 1] = 0
 
 
 def update_ext(i):
@@ -99,3 +97,79 @@ anim.save("results/gen_gol.gif", writer="imagemagick")
 """Use incremental update by growth function instead of a conditional update. 
 Growth function consists of a growth part and shrink part, 
 controlled by growth and shrink ranges of the neighborhood sum"""
+
+
+def figure_asset(K, growth, cmap="viridis", K_sum=1, bar_K=False):
+    """Configures Graphical representations of input Kernel and growth function.
+        The first plot on ax[0] demonstrates values of the Kernel across 0, 1, 2 columns
+        ax[1] Gives cross section of the Kernel, ie. plots the values of row 1 (middle row of 3x3 kernel), around the target cell
+        ax[2] Gives effect of Growth Kernel for different values of U. Negative or positive growth.
+    """
+    global R
+    K_size = K.shape[0];
+    K_mid = K_size // 2  # Get size and middle of Kernel
+    fig, ax = plt.subplots(1, 3, figsize=(14, 2),
+                           gridspec_kw={"width_ratios": [1, 1, 2]})  # Initiate figures with subplots
+
+    ax[0].imshow(K, cmap=cmap, interpolation="nearest", vmin=0)
+    ax[0].title.set_text("Kernel_K")
+
+    if bar_K:
+        ax[1].bar(range(K_size), K[K_mid, :], width=1)  # make bar plot
+    else:
+        ax[1].plot(range(K_size), K[K_mid, :])  # otherwise, plot normally
+    ax[1].title.set_text("K cross-section")
+    ax[1].set_xlim([K_mid - R - 3, K_mid + R + 3])
+
+    if K_sum <= 1:
+        x = np.linspace(0, K_sum, 1000)
+        ax[2].plot(x, growth(x))
+    else:
+        x = np.arange(K_sum + 1)
+        ax[2].step(x, growth(x))
+    ax[2].axhline(y=0, color="grey", linestyle="dotted")
+    ax[2].title.set_text("Growth G")
+    return fig
+
+
+# Reset values- same as above
+size = 64
+np.random.seed(0)
+A = np.random.randint(2, size=(size, size))  # Initiate grid
+K = np.ones((3, 3))
+K[1, 1] = 0
+
+K_sum = np.sum(K)
+
+
+def growth(U):
+    """Define growth function with growth/shrink ranges.
+    Take neighborhood sum as input.
+    The two logical values below are mutually exlusive. One will evaluate to 1
+    and the other to zero.
+    Returned values for each cell will be -1 or 1.
+    Once clipped this gives us 1, or 0."""
+    return 0 + (U == 3) - ((U < 2) | (U > 3))
+
+
+def update_growth(i):
+    global A
+    U = convolve2d(A, K, mode='same', boundary="wrap")
+    """Use incremental update and clipping. Instead of simple conditional"""  #
+    # A = (A & (U==2)) | (U==3)
+    A = np.clip(A + growth(U), 0, 1)  # Add growth distribution to grid and clip
+    img.set_array(A)
+    return img,
+
+
+# Generate Kernel and Growth assets
+figure_asset(K, growth, K_sum=int(K_sum), bar_K=True)
+
+# Run game using growth function
+fig = figure_world(A, cmap="binary")
+anim = animation.FuncAnimation(fig, update_growth, frames=50, interval=50)
+anim.save("results/growth_function_GOL.gif", writer="imagemagick")
+
+"""Lenia has now been generalised. We can extend it to continuous cases:
+1. Game of life -> larger than life (continuous space)
+2. Game of life -> Primordia (continuous """
