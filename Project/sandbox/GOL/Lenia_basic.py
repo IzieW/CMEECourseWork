@@ -164,12 +164,327 @@ def update_growth(i):
 
 # Generate Kernel and Growth assets
 figure_asset(K, growth, K_sum=int(K_sum), bar_K=True)
+plt.savefig("results/basic_growth_func.png")
 
 # Run game using growth function
 fig = figure_world(A, cmap="binary")
 anim = animation.FuncAnimation(fig, update_growth, frames=50, interval=50)
 anim.save("results/growth_function_GOL.gif", writer="imagemagick")
 
-"""Lenia has now been generalised. We can extend it to continuous cases:
+"""System has now been generalised. We can extend it to continuous cases:
 1. Game of life -> larger than life (continuous space)
-2. Game of life -> Primordia (continuous """
+2. Game of life -> Primordia (continuous states)
+3. Primordia -> Lenia (continuous states-space-time"""
+
+## 1. LARGER THAN LIFE
+"""In this CA, the convolutional Kernel is englarged to radius R, (extending the 
+Moore Neighbourhood). 
+Uses the periodic pattern Bosco- a particular type of oscillator"""
+# Load Bosco- sample creates
+pattern = {}  # Dictionary of creatures
+pattern["bosco"] = {"name": "Bosco", "R": 5, "b1": 34, "b2": 45, "s1": 34, "s2": 58,
+                    "cells": [[0, 0, 0, 0, 1, 0, 0, 0, 0, 0], [0, 0, 1, 1, 1, 1, 1, 0, 0, 0],
+                              [0, 1, 1, 0, 0, 1, 1, 1, 1, 0], [1, 1, 0, 0, 0, 1, 1, 1, 1, 1],
+                              [1, 0, 0, 0, 0, 0, 1, 1, 1, 1], [1, 1, 0, 0, 0, 0, 1, 1, 1, 1],
+                              [1, 1, 1, 0, 1, 1, 1, 1, 1, 1], [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+                              [0, 1, 1, 1, 1, 1, 1, 1, 0, 0], [0, 0, 1, 1, 1, 1, 1, 0, 0, 0],
+                              [0, 0, 0, 1, 1, 1, 0, 0, 0, 0]]
+                    }
+
+# Set values
+size = 64;
+cx, cy = 10, 10
+"""Instead of randint population, load bosco pattern, including
+parameters R, b1, b2, s1, s2, and cells"""
+globals().update(pattern["bosco"])
+C = np.asarray(cells)
+A = np.zeros([size, size])
+A[cx:cx + C.shape[0], cy:cy + C.shape[1]] = C
+"""Extend neighborhood (includes self)"""
+K = np.ones((2 * R + 1, 2 * R + 1))
+K_sum = np.sum(K)
+
+
+def growth(U):
+    """Bosco's rule:
+     b1..b2 is birth range
+     s1..s2 is stable range (outside of s1..s2 is shrink).
+     Below, if U is within the stable range, the second term will evaluate to zero.
+     If it is outside of the stable range, it will evalate to 1.
+     Needs to be within stable and birth range to be born"""
+    return 0 + ((U >= b1) & (U <= b2)) - ((U < s1) | (U > s2))
+
+
+def update(i):
+    global A
+    U = convolve2d(A, K, mode="same", boundary="wrap")
+    A = np.clip(A + growth(U), 0, 1)
+    img.set_array(A)
+    return img,
+
+
+figure_asset(K, growth, K_sum=K_sum, bar_K=True)
+plt.savefig("results/larger_than_life.png")
+
+fig = figure_world(A, cmap="binary")
+anim = animation.FuncAnimation(fig, update, frames=200, interval=50)
+anim.save("results/larger_than_life.gif", writer="imagemagick")
+
+## 2. PRIMORDIA
+"""Create continuous states, time and space in game of life.
+
+Firstly, allow a gradient of states between 0 and 1. Everything (growth/shrink) becomes
+scaled up by number of states. The resulting patterns are complex, and the precurser to Lenia"""
+
+# set scales
+size = 64
+states = 12  # multiple states
+np.random.seed(0)
+A = np.random.randint(states + 1, size=(size, size))  # Generate with random states
+K = np.ones((3, 3))
+K[1, 1] = 0
+K_sum = states * np.sum(K)
+
+
+def growth(U):
+    """Scale everything up by number of states"""
+    return 0 + ((U >= 20) & (U <= 24)) - ((U <= 18) | (U >= 32))
+
+def update(i):
+    global A
+    U = convolve2d(A, K, mode="same", boundary="wrap")
+    A = np.clip(A + growth(U), 0, states)
+    """Normalise pixels for image"""
+    img.set_array(A / states)
+    return img,
+
+
+figure_asset(K, growth, K_sum=K_sum, bar_K=True)
+plt.savefig("results/primordia_growth.png")
+
+fig = figure_world(A / states)
+anim = animation.FuncAnimation(fig, update, frames=200, interval=20)
+anim.save("results/Primorida.gif", writer="imagemagick")
+
+
+## NORMALIZED KERNEL
+"""Can normalise states, kernel and growth to make further generalisations easier.
+While states are integers, everytime we change the number of states, we will need to change
+all other properties as well.
+
+By restricting states between 0 and 1, we are able to make generalisations easier. 
+
+The resulting patterns will not change qualitatively"""
+
+# Normalise Kernel, and growth/shrink ranges
+
+size = 64
+states = 12
+np.random.seed(0)
+A = np.random.randint(states+1, size=(size, size))
+K = np.ones((3,3))
+K[1,1] = 0
+K_sum = states * np.sum(K)
+
+"""normalise kernel"""
+K = K/K_sum
+
+def growth(U):
+    """Normalise growth/shrink ranges, divide each number by K_sum"""
+    return 0 + ((U >= 0.2) & (U <= .25)) - ((U <= 0.18) | (U >= 0.33))
+
+def update(i):
+    global A
+    U = convolve2d(A, K, mode="same", boundary="wrap")
+    A = np.clip(A + growth(U), 0, states)
+    img.set_array(A / states)
+    return img,
+
+figure_asset(K, growth, bar_K=True)
+plt.savefig("results/normalised_primordial.png")
+
+fig = figure_world(A/states)
+anim = animation.FuncAnimation(fig, update, frames= 200, interval = 20)
+anim.save("results/normalised_kernel_primoridal.gif", writer = "imagemagick")
+
+
+## CONTINUOUS STATES AND TIME
+"""Next, we normalise states from discrete numbers to a range [0.0, 1.0]
+
+States become continous (effectively infinite, but technically still subject to precision
+of floating point numbers. Number of states is no longer useful.
+
+Will also define update frequency (T), and scale down incremental updates by a factor of dt, 1/T.
+By taking T to infinity, ie. very small timesteps, time will become continuous. 
+
+The resulting patterns do not change qualitatively."""
+
+T = 10
+np.random.seed(0)
+A = np.random.rand(size, size)  # random states [0:1]
+K = np.ones((3,3))
+K[1,1] = 0
+K = K/np.sum(K)  # normalise
+
+def growth(U):
+    """Normalise growth/shrink ranges, divide each number by K_sum"""
+    return 0 + ((U >= 0.2) & (U <= .25)) - ((U <= 0.19) | (U >= 0.33))
+
+def update(i):
+    global A
+    U = convolve2d(A, K, mode="same", boundary="wrap")
+    A = np.clip(A + 1/T*growth(U), 0, 1)
+    img.set_array(A)
+    return img,
+
+figure_asset(K, growth, bar_K=True)
+
+fig = figure_world(A)
+anim = animation.FuncAnimation(fig, update, frames=200, interval = 20)
+anim.save("results/continuous_time_space_primordial.gif", writer= "imagemagick")
+
+## LENIA
+"""Adding to the above, space can be made continuous as well. 
+
+Define Kernel radius R. The convolution kernel is englarged to readius R, but still rectangular in shape. 
+As R approaches infinity, space becomes continuous. 
+
+The resulting pattern acquires a sort of fluid-like quality"""
+
+R = 5
+np.random.seed(0)
+A = np.random.rand(size, size)  # Populate grid with random states
+"""Larger rectanglar kernel"""
+K = np.ones((2 *R+1, 2*R+1)); K[R, R] = 0  # Center is still zero
+K = K/np.sum(K)  # normalise
+
+def growth(U):
+    """Normalise growth/shrink ranges, divide each number by K_sum"""
+    return 0 + ((U >= 0.12) & (U <= .15)) - ((U <= 0.12) | (U >= 0.15))
+
+def update(i):
+    global A
+    U = convolve2d(A, K, mode="same", boundary="wrap")
+    A = np.clip(A + 1/T*growth(U), 0, 1)
+    img.set_array(A)
+    return img,
+
+figure_asset(K, growth, bar_K=True)
+plt.savefig("results/Lenia_growth_basic.png")
+
+fig = figure_world(A)
+anim = animation.FuncAnimation(fig, update, frames=200, interval = 20)
+anim.save("results/Lenia_basic.gif", writer="imagemagick")
+
+
+## RING KERNEL
+"""Hand draw a ring-like Kernel with the same radius. 
+
+The circular shape of the Kernel removes orthogonal bias (ie. the horizontal and vertical stripes) 
+in the patterns, changing them from anisotropic (dependent on direction) to isotrophic (equal in all directions).
+THe ring-like structure also resembles smoothlife"""
+
+np.random.seed(0)
+A = np.random.rand(size, size)
+
+# Create ring-like Kernel
+K = np.asarray([
+[0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+[0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+[0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+[0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+[1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1],
+[1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1],
+[1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1],
+[0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+[0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+[0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+[0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0]])
+K = K / np.sum(K)
+
+def growth(U):
+  return 0 + ((U>=0.12)&(U<=0.15)) - ((U<0.12)|(U>0.15))
+
+figure_asset(K, growth, bar_K=True)
+
+fig = figure_world(A)
+anim = animation.FuncAnimation(fig, update, frames=200, interval = 20)
+anim.save("results/ring_kernel_Lenia.gif", writer="imagemagick")
+
+
+## SMOOTH KERNEL
+"""Can also generate the kernel using a smooth bell-shaped function. (Gaussian)
+
+First, define a distance array from the center, normalised by factor 1/R, then feed it into 
+the bell shaped function. The result is a smooth ring-shaped Kernel.
+
+By convolving this Kernel, array U becomes the weighted neighbor sum with 
+the kernel being the weights. The patterns became smoother (though hardly observable given the small
+world"""
+# Define gaussian function. For each number produces point in curve.
+bell = lambda x, m, s: np.exp(-((x-m)/s)**2/2)
+
+T = 10
+size=64
+R = 10
+np.random.seed(0)
+A = np.random.rand(size, size)
+
+"""Smooth ring-like kernel: 
+Define distance array D. Function below produces a Euclidean distance matrix.
+Square root of the sum of abolsute values squared"""
+
+D = np.linalg.norm(np.asarray(np.ogrid[-R:R, -R:R]) + 1)/R
+K = (D<1) * bell(D, 0.5, 0.15) ## All distances within radius 1, transformed along gaussian gradient
+K = K/np.sum(K)  # Normalise
+
+def growth(U):
+    return 0 + ((U>=0.12)&(U<=0.15)) - ((U<0.12)|(U>0.15))
+
+def update(i):
+    global A, img
+    U = convolve2d(A, K, mode="same", boundary="wrap")
+    A = np.clip(A + 1/T * growth(U), 0, 1)
+    img.set_array(A)
+    return img,
+
+figure_asset(K, growth)
+plt.savefig("results/smooth_kernel.png")
+fig = figure_world(A)
+anim = animation.FuncAnimation(fig, update, frames=200, interval=20)
+anim.save("results/smooth_kernel.gif", writer="imagemagick")
+
+## SMOOTH GROWTH
+"""The growth function can also be replaced by smooth bell-shaped function, 
+with parameters growth center (m) and growth width (s). This makes the patterns even smoother
+
+With everything smoothed, we finally arrive at Lenia (meaning "smooth" in Latin)"""
+
+bell = lambda x, m, s: np.exp(-((x-m)/s)**2 / 2)
+size = 64
+T = 10
+R = 10
+np.random.seed(0)
+A = np.random.rand(size, size)
+D = np.linalg.norm(np.asarray(np.ogrid[-R:R, -R:R]) + 1) / R
+K = (D<1) * bell(D, 0.5, 0.15)
+K = K / np.sum(K)
+
+def growth(U):
+    """Smooth growth function"""
+    #  return 0 + ((U>=0.12)&(U<=0.15)) - ((U<0.12)|(U>0.15))
+    m = 0.135
+    s = 0.015
+    return bell(U, m, s)*2-1
+
+def update(i):
+    global A, img
+    U = convolve2d(A, K, mode='same', boundary='wrap')
+    A = np.clip(A + 1/T * growth(U), 0, 1)
+    img.set_array(A)
+    return img,
+
+figure_asset(K, growth)
+fig = figure_world(A)
+anim = animation.FuncAnimation(fig, update, frames=200, interval=20)
+anim.save("results/smooth_lenia.gif", writer="imagemagick")
