@@ -1,7 +1,9 @@
 # !/usr/bin/env python3
 
-"""Script creates basic Lenia system from game of life.
-Taken from Bert Chan's google notebook.
+"""Script generalises and extends game of life to fully smooth,
+continuous system known as Lenia, as illustrated by Bert Chan's
+google notebook, this script demonstrates the process of arriving
+at Lenia
 
     Parameters
     ------------
