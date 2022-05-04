@@ -145,8 +145,7 @@ A[cx:cx + C.shape[0], cy:cy + C.shape[1]] = C  # Load in fish cells to grid
 # fK=
 # Get distance matrix for each set of b in fish kernels
 Ds = [np.linalg.norm(np.ogrid[-mid:mid, -mid:mid]) / R * len(k['b']) for k in kernels]
-Ks = [(D < len(k["b"])) * np.asarray(k["b"])
-[np.minimum(D.astype(int), len(k["b"]) - 1)] * bell(D % 1, 0.5, 0.15) for D, k in zip(Ds, kernels)]
+Ks = [(D < len(k["b"])) * np.asarray(k["b"])[np.minimum(D.astype(int), len(k["b"]) - 1)] * bell(D % 1, 0.5, 0.15) for D, k in zip(Ds, kernels)]
 
 nKs = [ K / np.sum(K) for K in Ks]  # Normalise each Kernel in list
 fKs = [ np.fft.fft2(np.fft.fftshift(k)) for k in nKs]  # Fourier transform each kernel in list
