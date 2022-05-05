@@ -138,22 +138,25 @@ A = np.zeros([size, size])  # Initialise learning channel, A
 A[cx:cx + C.shape[0], cy:cy + C.shape[1]] = C  # Load initial configurations into learning channel)
 
 Ob = np.zeros([size, size])  # Initialise obstacle channel
-Ob[10:15, 10:15] = 1  # Initialise obstacles
+Ob[35:45, 35:45] = 1  # Initialise obstacles
+#Ob[40:45, 0:65] = 1  # net
+
+As = [A, Ob]  # List of channels
 
 """Create kernel for learning channel"""
-D = np.linalg.norm(np.asarray(np.ogrid[-R:R, -R:R]) + 1) / R
-K = (D < 1) * bell(D, 0.5, 0.15)
-K = K / np.sum(K)  # Normalise Kernel
+D = np.linalg.norm(np.asarray(np.ogrid[-R:R, -R:R]) + 1) / R  # create distance matrix
+K = (D < 1) * bell(D, 0.5, 0.15)  ## Transform all distances within radius 1 along smooth gaussian gradient
+K = K / np.sum(K)  # Normalise between 0:1
 
 """Create obstacle kernel"""
 sigmoid = lambda x: 1 / (1 + np.exp(-x))
 obstacle_k = lambda x: np.exp(-((x / 2) ** 2) / 2) * sigmoid(-10 * (x / 2 - 1))
-K_ob = (D < 0.05) * obstacle_k(D)
+K_ob = (D < 1) * obstacle_k(D)
 
 
 def growth(U):
     m = 0.135
-    s = 0.15
+    s = 0.015
     return bell(U, m, s) * 2 - 1
 
 
@@ -162,17 +165,57 @@ def obstacle_growth(U):
 
 
 def update(i):
-    global A, img
-    U1 = convolve2d(A, K, mode="same", boundary="wrap")
-    U2 = convolve2d(Ob, K_ob, mode="same", boundary="wrap")
-    A = np.clip(A + 1/T*growth(U1), 0, 1)
-    img.set_array(A)
+    global As, img
+    U1 = convolve2d(As[0], K, mode="same", boundary="wrap")
+    U2 = convolve2d(As[1], K_ob, mode="same", boundary="wrap")
+    # A = np.clip(A + 1/T*(growth(U1)), 0, 1)
+    As[0] = np.clip(As[0] + 1 / T * (growth(U1) + obstacle_growth(U2)), 0, 1)
+    img.set_array(sum(As))
     return img,
 
 
-#figure_asset(K, growth)  # Learning kernel
-#figure_asset(K_ob, obstacle_growth)  # Obstacle kernel
+# figure_asset(K, growth)  # Learning kernel
+# figure_asset(K_ob, obstacle_growth)  # Obstacle kernel
 
-fig = figure_world(A)
-anim = animation.FuncAnimation(fig, update, frames=200, interval = 20)
-anim.save("test_obstacle1.gif", writer="imagemagick")
+np.random.seed(0)
+fig = figure_world(sum(As))
+#anim = animation.FuncAnimation(fig, update, frames=200, interval=20)
+#anim.save("results/test_obstacle_3.gif", writer="imagemagick")
+
+
+#### MODELLING GRADIENTS ####
+"""Gradient using normalised counts"""
+def normal_count_grad():
+    """Return gradient channel A using normal count"""
+    grad_A = np.zeros([size, size])
+    for i in range(size): grad_A[i,] = i
+    grad_A = np.flip(grad_A/size)  # Normalise and flip so highest values are on top
+    return grad_A
+
+
+def gradient_update(i):
+    global As, img
+    U1 = convolve2d(As[0], K, mode="same", boundary="wrap")
+    # A = np.clip(A + 1/T*(growth(U1)), 0, 1)
+    As[0] = np.clip(As[0] + 1 / T * (growth(U1) + obstacle_growth(grad_A)), 0, 1)
+    img.set_array(sum(As))
+    return img,
+
+np.random.seed(0)
+fig = figure_world(sum(As))
+#anim = animation.FuncAnimation(fig, update, frames=200, interval=20)
+#anim.save("results/gradient_count.gif", writer="imagemagick")  # Too hostile
+
+"""Gradient using Exponential decay from row 1. 
+ie. becomes less hostile exponentially as we move away from row 1"""
+x = np.exp(-np.arange(size))
+grad_A = np.zeros([size, size])
+for i in range(size):
+    grad_A[i,] = x[i]  # Populate gradient channel with exp decay values
+
+As = [A, grad_A]
+
+fig = figure_world(sum(As))
+anim = animation.FuncAnimation(fig, gradient_update, frames=200, interval=20)
+anim.save("results/gradient_exponential_decay.gif", writer="imagemagick")  # Too hostile
+
