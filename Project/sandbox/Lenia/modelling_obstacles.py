@@ -133,13 +133,14 @@ C = np.asarray(cells)
 C = sc.ndimage.zoom(C, scale, order=0)
 R *= scale
 
-"""Load learning and obstacle channel"""
+"""Load learning channel"""
 A = np.zeros([size, size])  # Initialise learning channel, A
 A[cx:cx + C.shape[0], cy:cy + C.shape[1]] = C  # Load initial configurations into learning channel)
 
+"""LOAD SOLID OBSTACLES CHANNEL"""
 Ob = np.zeros([size, size])  # Initialise obstacle channel
-Ob[35:45, 35:45] = 1  # Initialise obstacles
-#Ob[40:45, 0:65] = 1  # net
+Ob[35:45, 35:45] = 1  # Initialise solid obstacles
+# Ob[40:45, 0:65] = 1  # net
 
 As = [A, Ob]  # List of channels
 
@@ -148,7 +149,7 @@ D = np.linalg.norm(np.asarray(np.ogrid[-R:R, -R:R]) + 1) / R  # create distance 
 K = (D < 1) * bell(D, 0.5, 0.15)  ## Transform all distances within radius 1 along smooth gaussian gradient
 K = K / np.sum(K)  # Normalise between 0:1
 
-"""Create obstacle kernel"""
+"""Create solid-obstacle kernel"""
 sigmoid = lambda x: 1 / (1 + np.exp(-x))
 obstacle_k = lambda x: np.exp(-((x / 2) ** 2) / 2) * sigmoid(-10 * (x / 2 - 1))
 K_ob = (D < 1) * obstacle_k(D)
@@ -179,17 +180,18 @@ def update(i):
 
 np.random.seed(0)
 fig = figure_world(sum(As))
-#anim = animation.FuncAnimation(fig, update, frames=200, interval=20)
-#anim.save("results/test_obstacle_3.gif", writer="imagemagick")
+# anim = animation.FuncAnimation(fig, update, frames=200, interval=20)
+# anim.save("results/test_obstacle_3.gif", writer="imagemagick")
 
 
 #### MODELLING GRADIENTS ####
 """Gradient using normalised counts"""
+
 def normal_count_grad():
     """Return gradient channel A using normal count"""
     grad_A = np.zeros([size, size])
     for i in range(size): grad_A[i,] = i
-    grad_A = np.flip(grad_A/size)  # Normalise and flip so highest values are on top
+    grad_A = np.flip(grad_A / size)  # Normalise and flip so highest values are on top
     return grad_A
 
 
@@ -201,10 +203,15 @@ def gradient_update(i):
     img.set_array(sum(As))
     return img,
 
+
 np.random.seed(0)
 fig = figure_world(sum(As))
-#anim = animation.FuncAnimation(fig, update, frames=200, interval=20)
-#anim.save("results/gradient_count.gif", writer="imagemagick")  # Too hostile
+# anim = animation.FuncAnimation(fig, update, frames=200, interval=20)
+# anim.save("results/gradient_count.gif", writer="imagemagick")  # Too hostile
+
+## Gradient count too harsh an environment- Lenia figures never even manifest.
+# Solutions: Model a more centered diffusion, where highest values are more localised and larger area is inhabitable
+# Make negative growth less harsh
 
 """Gradient using Exponential decay from row 1. 
 ie. becomes less hostile exponentially as we move away from row 1"""
@@ -219,3 +226,26 @@ fig = figure_world(sum(As))
 anim = animation.FuncAnimation(fig, gradient_update, frames=200, interval=20)
 anim.save("results/gradient_exponential_decay.gif", writer="imagemagick")  # Too hostile
 
+
+### MAKE GRADIENT MORE GRADUAL ###
+def populate_channel(gradient_stretch):
+    """Populate channel using exponential decay.
+    Gradient stretch gives value exp curve is stretched by"""
+    x = np.exp(-np.arange(size)/gradient_stretch)
+    g = np.zeros([size, size])
+    for i in range(size):
+        g[i,] = x[i]
+
+    return g
+
+
+grad_2 = populate_channel(2)
+grad_4 = populate_channel(4)
+grad_10 = populate_channel(10)  # All three not diffuse enough
+grad_50 = populate_channel(50)  # Too diffuse
+
+def render(A, O, file_name):
+    As = [A, O]
+    fig = figure_world(sum(As))
+    anim = animation.FuncAnimation(fig, gradient_update, frames=200, interval=20)
+    anim.save("results/"+file_name, writer="imagemagick")
