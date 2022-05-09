@@ -223,7 +223,7 @@ def mutate(p):
     """Mutate input parameter p"""
     return np.exp(np.log(p) + np.random.uniform(low=-0.2, high=0.2))
 
-def run_one(parameters, seed=0):
+def crude_evolve(parameters, seed=0):
     """Run one round of evolutionary optimisation.
     From input parameters, mutate one parameter chosen at random.
     Run simulations on both wild_type and mutant on same obstacle configuration.
@@ -264,5 +264,45 @@ def run_one(parameters, seed=0):
     elif pfix < n:
         print("Reject Mutation")
         return wild_type
+
+def run_one(parameters, seed=0):
+    """Run one round of evolutionary optimisation.
+    From input parameters, mutate one parameter chosen at random.
+    Run simulations on 10 wild_type and mutant: Each wild-mutant couple
+    experience same obstacle configuration, and configuration changes
+    ten times for each group.
+
+    Calculate overall stochastic fitness of mutant and return winning set of parameters"""
+    A = load_learning()
+    np.random.seed(seed)  # Set seed
+    wild_type = parameters[:]
+    mutant_type = parameters[:]
+    x = np.random.randint(0, len(parameters)-1)  # Choose random index from parameter range
+    print(x)
+    mutant_type[x] = mutate(mutant_type[x])  # Mutate parameter in mutant type
+    print(wild_type)
+    print(mutant_type)
+
+    # Run mutant and wild parameters over 10 obstacle configurations
+    tm, tw = 0, 0  # Survival time for mutant, wild type
+    for i in range(10):
+        np.random.seed(i)  # Each with own seed
+        O = load_obstacles(n=3)  # Load obstacle configuration
+        tm += get_t(A, O, mutant_type)
+        tw += get_t(A, O, wild_type)
+
+    # Calculate selection coefficient from survival time
+    s = (tm - tw)/tw
+    pfix = 2*s  # probability of fixation
+
+    # Draw random n, 0 <= n <= 1
+    n = np.random.sample(1)[0]
+    if pfix >= n:
+        print("Accept mutation")
+        return mutant_type
+    elif pfix < n:
+        print("Reject Mutation")
+        return wild_type
+
 
 
