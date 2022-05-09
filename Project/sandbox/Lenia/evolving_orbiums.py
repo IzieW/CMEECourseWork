@@ -146,7 +146,7 @@ def load_obstacles(n, r=5, seed = 0):
     """Load obstacle channel with random configuration
     of n obstacles with radius r"""
     # Sample center point coordinates a, b
-    np.random.seed(seed)
+    #np.random.seed(seed)
     O = np.zeros([size, size])
     for i in range(n):
         mid_point = tuple(np.random.randint(0, size - 1, 2))
@@ -223,24 +223,46 @@ def mutate(p):
     """Mutate input parameter p"""
     return np.exp(np.log(p) + np.random.uniform(low=-0.2, high=0.2))
 
-def get_fitness(parameters, seed=0):
-    """Run evolutionary optimisation"""
+def run_one(parameters, seed=0):
+    """Run one round of evolutionary optimisation.
+    From input parameters, mutate one parameter chosen at random.
+    Run simulations on both wild_type and mutant on same obstacle configuration.
+
+    Calculate fitness from survival time, and return winning set of parameters."""
     A = load_learning()
-    O = load_obstacles(n=3)
-    wild_type = parameters
-    mutant_type = parameters
+    np.random.seed(seed)  # Set seed
+    wild_type = parameters[:]
+    mutant_type = parameters[:]
     x = np.random.randint(0, len(parameters)-1)  # Choose random index from parameter range
     print(x)
-    print(mutant_type[x])
     mutant_type[x] = mutate(mutant_type[x])  # Mutate parameter in mutant type
-    print(mutant_type[x])
+    print(wild_type)
+    print(mutant_type)
 
-    np.random.seed(seed)
+    O = load_obstacles(n=3)
+    plt.matshow(O)
+    plt.show()
     tm = get_t(A, O, mutant_type)
-    np.random.seed(seed)
     tw = get_t(A, O, wild_type)
 
-    results = {"wild_type": tw, "mutant_type": tm}
+    # Run mutant and wild parameters over 10 obstacle configurations
+    """tm, tw = 0, 0  # Survival time for mutant, wild type
+    for i in range(10):
+        O = load_obstacles(n=3)  # Load obstacle configuration
+        tm += get_t(A, O, mutant_type)
+        tw += get_t(A, O, wild_type)"""
 
-    # NEED TO CALCULATE FITNESS AND WHICH IS SELECTED SO THAT PARAMETERS CAN BE SAVED AND PASSED DOWN
-    return results
+    # Calculate selection coefficient from survival time
+    s = (tm - tw)/tw
+    pfix = 2*s  # probability of fixation
+
+    # Draw random n, 0 <= n <= 1
+    n = np.random.sample(1)[0]
+    if pfix >= n:
+        print("Accept mutation")
+        return mutant_type
+    elif pfix < n:
+        print("Reject Mutation")
+        return wild_type
+
+
