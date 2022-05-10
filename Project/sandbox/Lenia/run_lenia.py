@@ -1,8 +1,15 @@
 # !/usr/bin/env python3
 
-"""New run lenia script
+"""
+Run and render lenia with any input set of parameters.
 
-compile from input parameters"""
+Pass name of file from command line. File should be in the results/parameters folder. No additional path or .csv
+is required. Only the bare file name- which is in the results/parameters folder.
+
+Lenia will run parameters and produce two files:
+    1. A kernel cross section + growth function png, named after the input filenmae
+    2. A rendered animation of the life form from input parameters
+"""
 #### PREPARATION ####
 ## IMPORTS ##
 import numpy as np
@@ -80,27 +87,7 @@ def load_parameters(filename):
     dict["cells"] = cells
     return dict
 
-
-orbium = {"name":"Orbium","R":13,"T":10,"m":0.15,"s":0.015,"b":[1],
-  "cells":[[0,0,0,0,0,0,0.1,0.14,0.1,0,0,0.03,0.03,0,0,0.3,0,0,0,0], [0,0,0,0,0,0.08,0.24,0.3,0.3,0.18,0.14,0.15,0.16,0.15,0.09,0.2,0,0,0,0], [0,0,0,0,0,0.15,0.34,0.44,0.46,0.38,0.18,0.14,0.11,0.13,0.19,0.18,0.45,0,0,0], [0,0,0,0,0.06,0.13,0.39,0.5,0.5,0.37,0.06,0,0,0,0.02,0.16,0.68,0,0,0], [0,0,0,0.11,0.17,0.17,0.33,0.4,0.38,0.28,0.14,0,0,0,0,0,0.18,0.42,0,0], [0,0,0.09,0.18,0.13,0.06,0.08,0.26,0.32,0.32,0.27,0,0,0,0,0,0,0.82,0,0], [0.27,0,0.16,0.12,0,0,0,0.25,0.38,0.44,0.45,0.34,0,0,0,0,0,0.22,0.17,0], [0,0.07,0.2,0.02,0,0,0,0.31,0.48,0.57,0.6,0.57,0,0,0,0,0,0,0.49,0], [0,0.59,0.19,0,0,0,0,0.2,0.57,0.69,0.76,0.76,0.49,0,0,0,0,0,0.36,0], [0,0.58,0.19,0,0,0,0,0,0.67,0.83,0.9,0.92,0.87,0.12,0,0,0,0,0.22,0.07], [0,0,0.46,0,0,0,0,0,0.7,0.93,1,1,1,0.61,0,0,0,0,0.18,0.11], [0,0,0.82,0,0,0,0,0,0.47,1,1,0.98,1,0.96,0.27,0,0,0,0.19,0.1], [0,0,0.46,0,0,0,0,0,0.25,1,1,0.84,0.92,0.97,0.54,0.14,0.04,0.1,0.21,0.05], [0,0,0,0.4,0,0,0,0,0.09,0.8,1,0.82,0.8,0.85,0.63,0.31,0.18,0.19,0.2,0.01], [0,0,0,0.36,0.1,0,0,0,0.05,0.54,0.86,0.79,0.74,0.72,0.6,0.39,0.28,0.24,0.13,0], [0,0,0,0.01,0.3,0.07,0,0,0.08,0.36,0.64,0.7,0.64,0.6,0.51,0.39,0.29,0.19,0.04,0], [0,0,0,0,0.1,0.24,0.14,0.1,0.15,0.29,0.45,0.53,0.52,0.46,0.4,0.31,0.21,0.08,0,0], [0,0,0,0,0,0.08,0.21,0.21,0.22,0.29,0.36,0.39,0.37,0.33,0.26,0.18,0.09,0,0,0], [0,0,0,0,0,0,0.03,0.13,0.19,0.22,0.24,0.24,0.23,0.18,0.13,0.05,0,0,0,0], [0,0,0,0,0,0,0,0,0.02,0.06,0.08,0.09,0.07,0.05,0.01,0,0,0,0,0]]
-}
-
-orbium = load_parameters("orbium_classic")
-
-bell = lambda x, m, s: np.exp(-((x - m) / s) ** 2 / 2)  # Gaussian function
-
-
-size = 64;
-mid = size // 2;
-cx, cy = 20, 20
-globals().update(orbium)  # load orbium pattern
-
-"""Load learning and obstacle channel"""
-C = np.asarray(cells)
-A = np.zeros([size, size])  # Initialise learning channel, A
-A[cx:cx + C.shape[0], cy:cy + C.shape[1]] = C  # Load initial configurations into learning channel)
-
-def load_obstacles(n, r=5, seed = 0):
+def load_obstacles(n, size, r=5, seed = 0):
     """Load obstacle channel with random configuration
     of n obstacles with radius r"""
     # Sample center point coordinates a, b
@@ -111,18 +98,7 @@ def load_obstacles(n, r=5, seed = 0):
         O[mid_point[0]:mid_point[0] + r, mid_point[1]:mid_point[1] + r] = 1  # load obstacles
     return O
 
-# Load obstacle configuration
-O = load_obstacles(n=6)
-
-As = [A, O]  # List of channels
-
-"""Create kernel for learning channel"""
-D = np.linalg.norm(np.ogrid[-mid:mid, -mid:mid])/R
-# D = np.linalg.norm(np.asarray(np.ogrid[-R:R, -R:R]) + 1)/R
-K = (D < 1) * bell(D, 0.5, 0.15)  ## Transform all distances within radius 1 along smooth gaussian gradient
-K = K / np.sum(K)  # Normalise between 0:1
-fK = np.fft.fft2(np.fft.fftshift(K))  # fourier transform
-
+bell = lambda x, m, s: np.exp(-((x - m) / s) ** 2 / 2)  # Gaussian function
 
 def growth(U):
     return bell(U, m, s) * 2 - 1
@@ -143,10 +119,42 @@ def update(i):
     return img,
 
 
-np.random.seed(0)
-print("rendering animation...")
-fig = figure_world(sum(As))
-anim = animation.FuncAnimation(fig, update, frames=200, interval=20)
-anim.save("results/classic_orbium_anim.gif", writer="imagemagick")
-print("process complete")
+def main(argv):
+    """Compile and render LEnia animation from input parameters"""
+    filename = argv[1]
+    orbium = load_parameters(filename)
 
+    size = 64;
+    mid = size // 2;
+    cx, cy = 20, 20
+    globals().update(orbium)  # load orbium pattern
+
+    """Load learning channel"""
+    C = np.asarray(cells)
+    A = np.zeros([size, size])  # Initialise learning channel, A
+    A[cx:cx + C.shape[0], cy:cy + C.shape[1]] = C  # Load initial configurations into learning channel)
+
+    """Load obstacle configuration"""
+    O = load_obstacles(n=6, size = size)
+
+    """Create kernel for learning channel"""
+    D = np.linalg.norm(np.ogrid[-mid:mid, -mid:mid])/R
+    K = (D < 1) * bell(D, 0.5, 0.15)  ## Transform all distances within radius 1 along smooth gaussian gradient
+    K = K / np.sum(K)  # Normalise between 0:1
+
+    global As, fK  # Make properties global
+    fK = np.fft.fft2(np.fft.fftshift(K))  # fourier transform kernel
+    As = [A, O]  # List of channels
+
+    figure_asset(K, growth)
+    plt.savefig("results/"+filename+"_kernel.png")
+
+    print("rendering animation...")
+    fig = figure_world(sum(As))
+    anim = animation.FuncAnimation(fig, update, frames=200, interval=20)
+    anim.save("results/"+filename+"_anim.gif", writer="imagemagick")
+    print("process complete")
+
+
+if __name__ == "__main__":
+    main(sys.argv)
