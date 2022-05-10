@@ -11,6 +11,7 @@ import scipy as sc
 from scipy.signal import convolve2d
 import matplotlib.pylab as plt
 from matplotlib import animation
+import csv
 
 # Silence warnings
 np.warnings.filterwarnings("ignore", category=np.VisibleDeprecationWarning)  # Silence warnings
@@ -123,15 +124,19 @@ C = np.asarray(orbium["cells"])
 C = sc.ndimage.zoom(C, scale, order=0)
 orbium["R"] *= scale
 theta[0] *= scale
+orbium["cells"] = C
 
 
-def learning_kernel(parameters):
+def learning_kernel(parameters, fourier=False):
     """Create kernel for learning channel"""
     R = parameters[0]
-    D = np.linalg.norm(np.asarray(np.ogrid[-R:R, -R:R]) + 1) / R  # create distance matrix
+    D = np.linalg.norm(np.asarray(np.ogrid[-mid:mid, -mid:mid]) + 1) / R  # create distance matrix
     K = (D < 1) * bell(D, 0.5, 0.15)  ## Transform all distances within radius 1 along smooth gaussian gradient
     K = K / np.sum(K)  # Normalise between 0:1
-    return K
+    if fourier:
+        return np.fft.fft2(np.fft.fftshift(K))  # fourier transform
+    else:
+        return K
 
 
 #### FUNCTIONS #####
@@ -157,8 +162,8 @@ def load_obstacles(n, r=5, seed = 0):
 def learning_growth(U, parameters=1):
     """Define growth of learning channel cell according to neighbourhood values U.
     Take mean and std from life form parameters"""
-    m = parameters[2]
-    s = parameters[3]
+    m = 0.135
+    s = 0.015
     return bell(U, m, s) * 2 - 1
 
 
@@ -189,7 +194,8 @@ anim.save("results/test_space.gif", writer="imagemagick")"""
 def update_man(A, K, parameters):
     """One time step of Lenia, takes current grid A and returns one update"""
     T = parameters[1]
-    U1 = convolve2d(A, K, mode="same", boundary="wrap")
+    U1 = np.real(np.fft.ifft2(K*np.fft.fft2(A)))
+    #U1 = convolve2d(A, K, mode="same", boundary="wrap")
     # A = np.clip(A + 1/T*(growth(U1)), 0, 1)
     A = np.clip(A + 1 / T * (learning_growth(U1, parameters) + obstacle_growth(O)), 0, 1)
     return A
@@ -202,7 +208,7 @@ def get_t(A, O, parameters):
 
      Return time until life form dissolves"""
 
-    K = learning_kernel(parameters)  # Get kernel
+    K = learning_kernel(parameters, fourier=True)  # Get kernel
 
     status = np.sum(A)
     t = 0  # Set time
@@ -240,17 +246,8 @@ def crude_evolve(parameters, seed=0):
     print(mutant_type)
 
     O = load_obstacles(n=3)
-    plt.matshow(O)
-    plt.show()
     tm = get_t(A, O, mutant_type)
     tw = get_t(A, O, wild_type)
-
-    # Run mutant and wild parameters over 10 obstacle configurations
-    """tm, tw = 0, 0  # Survival time for mutant, wild type
-    for i in range(10):
-        O = load_obstacles(n=3)  # Load obstacle configuration
-        tm += get_t(A, O, mutant_type)
-        tw += get_t(A, O, wild_type)"""
 
     # Calculate selection coefficient from survival time
     s = (tm - tw)/tw
@@ -274,14 +271,12 @@ def run_one(parameters, seed=0):
 
     Calculate overall stochastic fitness of mutant and return winning set of parameters"""
     A = load_learning()
-    np.random.seed(seed)  # Set seed
+    #np.random.seed(seed)  # Set seed
     wild_type = parameters[:]
     mutant_type = parameters[:]
     x = np.random.randint(0, len(parameters)-1)  # Choose random index from parameter range
-    print(x)
     mutant_type[x] = mutate(mutant_type[x])  # Mutate parameter in mutant type
-    print(wild_type)
-    print(mutant_type)
+
 
     # Run mutant and wild parameters over 10 obstacle configurations
     tm, tw = 0, 0  # Survival time for mutant, wild type
@@ -304,5 +299,40 @@ def run_one(parameters, seed=0):
         print("Reject Mutation")
         return wild_type
 
+def optimise(parameters):
+    """Run mutation/selection until optimised function sticks
 
+    To start with, run until 10 mutations are accepted. Check output orbium"""
+    mutation_count = 0
+
+    par_in = parameters[:]
+    gen_count = 0
+
+    while (mutation_count < 2) & (gen_count < 100):
+        par_out = run_one(par_in)
+        gen_count += 1
+        if par_out != par_in:
+            mutation_count += 1
+            print(mutation_count, "mutation")
+            par_in = par_out[:]
+
+    return par_out
+
+def save_parameters(parameters, filename, cells):
+    ### NEED TO FIGURE OUT A SOLUTION TO B
+    dict = {}
+    keys = ["R", "T", "m", "s", "b"]
+    for i in range(len(parameters)):
+        dict[keys[i]] = parameters[i]
+
+    with open("results/parameters/parameters_"+filename+".csv", "w") as f:
+        csvwrite = csv.writer(f)
+        for k in dict:
+                csvwrite.writerow([k, dict[k]])
+    with open("results/parameters/cells_"+filename+".csv", "w") as f:
+        csvwrite = csv.writer(f)
+        for i in cells:
+            csvwrite.writerow(i)
+
+    return dict
 
