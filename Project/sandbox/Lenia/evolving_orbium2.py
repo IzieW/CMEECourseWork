@@ -14,6 +14,7 @@ import scipy as sc
 from scipy.signal import convolve2d
 import matplotlib.pylab as plt
 from matplotlib import animation
+from copy import deepcopy
 import sys
 import csv
 # Silence warnings
@@ -95,12 +96,12 @@ C = np.asarray(orbium["cells"])  # Initial configuration of cells
 A = np.zeros([size, size])  # Initialise learning channel, A
 A[cx:cx + C.shape[0], cy:cy + C.shape[1]] = C  # Load initial configurations into learning channel)
 
-## FUNCTIONS ##
+### CHANNEL FUNCTIONS ###
 def load_obstacles(n, r=5, size=size, seed=0):
     """Load obstacle channel with random configuration
     of n obstacles with radius r"""
     # Sample center point coordinates a, b
-    np.random.seed(seed)
+    #np.random.seed(seed)
     O = np.zeros([size, size])
     for i in range(n):
         mid_point = tuple(np.random.randint(0, size - 1, 2))
@@ -118,6 +119,7 @@ def learning_kernel(R, mid=mid, fourier=True):
     else:
         return K
 
+### GROWTH FUNCTIONS ####
 bell = lambda x, m, s: np.exp(-((x - m) / s) ** 2 / 2)  # Gaussian function
 
 def growth_render(U):
@@ -135,7 +137,7 @@ def obstacle_growth(U):
     """Defines how creatures grow (shrink) with obstacles"""
     return -10 * np.maximum(0, (U - 0.001))
 
-
+## RENDERING ###
 def update(i):
     """Update function for rendering. All properties made global beforehand"""
     global As, img
@@ -147,6 +149,7 @@ def update(i):
     img.set_array(sum(As))  # Sum two channels to create one channel
     return img,
 
+
 def make_dict(parameters):
     """Take list of parameters and convert to dictionary"""
     dict = {}
@@ -155,25 +158,127 @@ def make_dict(parameters):
         dict[keys[i]] = parameters[i]
     return dict
 
-def render(parameters, filename, A=A, obstacles=3, seed=0):
+def render(parameters, filename, A=A, obstacles=5, r=8, seed=0):
     """Render Lenia animation for cross check from input set of parameters"""
     parameters = make_dict(parameters)
     globals().update(parameters)  # set as globals
 
     # Load assets
-    O = load_obstacles(n=obstacles, seed=seed)
+    O = load_obstacles(n=obstacles, r=r, seed=seed)
     K = learning_kernel(R, fourier=False)
     global fK, As
     fK = learning_kernel(R)
-    As = [A, O]
+    As = deepcopy([A, O])
 
     figure_asset(K, growth_render)
     plt.savefig("results/"+filename+"_kernel.png")
-
 
     print("rendering animation...")
     fig = figure_world(sum(As))
     anim = animation.FuncAnimation(fig, update, frames=200, interval=20)
     anim.save("results/"+filename+"_anim.gif", writer="imagemagick")
     print("process complete")
+
+### EVOLUTION  ###
+def mutate(p):
+    """Mutate input parameter p"""
+    return np.exp(np.log(p) + np.random.uniform(low=-0.2, high=0.2))
+
+def prob_fixation(wild_time, mutant_time):
+    """Return probability of fixation given time survived by mutant and wild type"""
+    s = (mutant_time-wild_time)/wild_time  # selection coefficient
+    return 2*s # probability of fixation
+
+def update_man(grid, obstacle, fK, T, m, s, t=0, show = False):
+    """Update one time step of Lenia growth.
+    grid = A
+    obstacle = o"""
+    U1 = np.real(np.fft.ifft2(fK*np.fft.fft2(grid)))
+    """Update learning channel with growth from both obstacle and 
+    growth channel"""
+    grid = np.clip(grid + 1 / T * (growth(U1, m, s) + obstacle_growth(obstacle)), 0, 1)
+    if show & (t == 5):  # Feature for cross check
+        As = [grid, o]
+        plt.matshow(sum(As))
+    return grid
+
+def run_one(grid, O, K, parameters, show=False):
+    """Run creature of given parameters in given obstacle configuration until it dies.
+    Return time taken to die"""
+    status = np.sum(grid)
+    t = 0  #  set timer
+    while status > 0:  # While there are still cells in the grid
+        t += 1  # add one to timer
+        if t%1000 == 0:
+            print(t)
+        if t > 10000:
+            return t
+        grid = update_man(grid, obstacle=O, fK= K, T=parameters[1], m= parameters[2], s=parameters[3], t=t, show = show)
+        status = np.sum(grid)  # Check sum
+    return t
+
+
+def select_one(parameters, n=5, A=A):
+    """Mutate one parameter and assess fitness agaisnt wild type over ten simulations
+    in different obstacles environments. Return the winning set of parameters"""
+    ## Load wild and mutant types ##
+    wild_type = parameters[:]
+    mutant_type = parameters[:]
+    x = np.random.randint(0, len(parameters)-1)  # Choose random index from parameter range
+    mutant_type[x] = mutate(mutant_type[x])  # Mutate parameter
+
+    # Load kernels for each
+    fK_wild = learning_kernel(R=wild_type[0])
+    fK_mutant = learning_kernel(R=mutant_type[0])
+
+    # Run 10 pairs of mutant/wild type over 10 obstacle configurations
+    t_wild, t_mutant = 0, 0  # set survival times
+    for i in range(10):
+        print("Trial: ", i)
+        O = load_obstacles(n=5, r=8)
+        t_wild += run_one(grid= A, O=O,K = fK_wild, parameters=wild_type)
+        t_mutant += run_one(grid = A, O=O, K=fK_mutant, parameters=mutant_type)
+
+    print("WILD TIME:", t_wild)
+    print("MUTANT TIME:", t_mutant)
+    # Get probability of fixation
+    p_fix = prob_fixation(wild_time=t_wild, mutant_time=t_mutant)
+
+    x = np.random.uniform(0, 1)
+    if p_fix >= x:
+        print("Accept mutant")
+        return mutant_type
+    else:
+        print("Reject mutant")
+        return wild_type
+
+def optimise(parameters):
+    """Run evolution for x number of mutations.
+    Return optimal parameters"""
+    mutations = 0  # initiate mutation count
+    par_in = parameters[:]
+    while mutations < 5:
+        par_out = select_one(par_in)
+        if par_out != par_in:  # if winning set of parameters are different
+            par_in = deepcopy(par_out)  # update par_in
+            mutations += 1
+    return par_out
+
+def save_parameters(parameters, filename, cells):
+    ### NEED TO FIGURE OUT A SOLUTION TO B
+    dict = {}
+    keys = ["R", "T", "m", "s", "b"]
+    for i in range(len(parameters)):
+        dict[keys[i]] = parameters[i]
+
+    with open("results/parameters/parameters_"+filename+".csv", "w") as f:
+        csvwrite = csv.writer(f)
+        for k in dict:
+                csvwrite.writerow([k, dict[k]])
+    with open("results/parameters/cells_"+filename+".csv", "w") as f:
+        csvwrite = csv.writer(f)
+        for i in cells:
+            csvwrite.writerow(i)
+
+    return dict
 
