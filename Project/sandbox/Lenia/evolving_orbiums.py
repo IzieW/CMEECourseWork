@@ -12,13 +12,8 @@ from scipy.signal import convolve2d
 import matplotlib.pylab as plt
 from matplotlib import animation
 import csv
-
 # Silence warnings
 np.warnings.filterwarnings("ignore", category=np.VisibleDeprecationWarning)  # Silence warnings
-
-
-## FUNCTIONS ##
-
 def figure_world(A, cmap="viridis"):
     """Set up basic graphics of unpopulated, unsized world"""
     global img  # make final image global
@@ -27,8 +22,6 @@ def figure_world(A, cmap="viridis"):
     plt.title = ("World A")
     plt.close()
     return fig
-
-
 def figure_asset(K, growth, cmap="viridis", K_sum=1, bar_K=False):
     """ Return graphical representation of input kernel and growth function.
     Subplot 1: Graph of Kernel in matrix form
@@ -60,8 +53,6 @@ def figure_asset(K, growth, cmap="viridis", K_sum=1, bar_K=False):
     ax[2].axhline(y=0, color="grey", linestyle="dotted")
     ax[2].title.set_text("Growth G")
     return fig
-
-
 def figure_asset_list(Ks, nKs, growth, kernels, use_c0=False, cmap='viridis', K_sum=1):
     global R
     K_size = Ks[0].shape[0];
@@ -85,7 +76,7 @@ def figure_asset_list(Ks, nKs, growth, kernels, use_c0=False, cmap='viridis', K_
     ax[2].title.set_text('growths Gs')
     return fig
 
-
+### EVOLVING ORBIUM ####
 ## LOAD ORBIUM ##
 orbium = {"name": "Orbium", "R": 13, "T": 10, "m": 0.15, "s": 0.015, "b": [1],
           "cells": [[0, 0, 0, 0, 0, 0, 0.1, 0.14, 0.1, 0, 0, 0.03, 0.03, 0, 0, 0.3, 0, 0, 0, 0],
@@ -109,8 +100,7 @@ orbium = {"name": "Orbium", "R": 13, "T": 10, "m": 0.15, "s": 0.015, "b": [1],
                     [0, 0, 0, 0, 0, 0, 0.03, 0.13, 0.19, 0.22, 0.24, 0.24, 0.23, 0.18, 0.13, 0.05, 0, 0, 0, 0],
                     [0, 0, 0, 0, 0, 0, 0, 0, 0.02, 0.06, 0.08, 0.09, 0.07, 0.05, 0.01, 0, 0, 0, 0, 0]]
           }
-
-theta = [orbium[i] for i in ["R", "T", "m", "s", "b"]]
+theta = [orbium[i] for i in ["R", "T", "m", "s", "b"]]  # save paramters
 
 ##### CONFIGURE ENVIRONMENT ###
 ## CONSTANTS ##
@@ -118,13 +108,7 @@ bell = lambda x, m, s: np.exp(-((x - m) / s) ** 2 / 2)  # Gaussian function
 size = 64;
 cx, cy = 20, 20
 mid = size // 2;
-scale = 0.75;
 C = np.asarray(orbium["cells"])
-# Scale cells and radius by given value of scale
-C = sc.ndimage.zoom(C, scale, order=0)
-orbium["R"] *= scale
-theta[0] *= scale
-orbium["cells"] = C
 
 
 def learning_kernel(parameters, fourier=False):
