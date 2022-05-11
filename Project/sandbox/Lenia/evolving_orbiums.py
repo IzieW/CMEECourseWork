@@ -1,9 +1,12 @@
 # !/usr/bin/env python3
 
-"""Exploration of evolving Orbium life forms
-in a simple obstacle space according to evolutionary optimisation techniques
-described in Godany, Khatri and Goldstein 2017."""
+"""
+Script uses process of mutation and selection to find Lenia solutions
+which allow orbium to navigate environmental obstacles.
 
+Script attempts to copy output of the flower's lab, but with evolutionary
+algorithms.
+"""
 #### PREPARATION ####
 ## IMPORTS ##
 import numpy as np
@@ -11,9 +14,12 @@ import scipy as sc
 from scipy.signal import convolve2d
 import matplotlib.pylab as plt
 from matplotlib import animation
+from copy import deepcopy
+import sys
 import csv
 # Silence warnings
 np.warnings.filterwarnings("ignore", category=np.VisibleDeprecationWarning)  # Silence warnings
+# Visualisation functions
 def figure_world(A, cmap="viridis"):
     """Set up basic graphics of unpopulated, unsized world"""
     global img  # make final image global
@@ -53,31 +59,11 @@ def figure_asset(K, growth, cmap="viridis", K_sum=1, bar_K=False):
     ax[2].axhline(y=0, color="grey", linestyle="dotted")
     ax[2].title.set_text("Growth G")
     return fig
-def figure_asset_list(Ks, nKs, growth, kernels, use_c0=False, cmap='viridis', K_sum=1):
-    global R
-    K_size = Ks[0].shape[0];
-    K_mid = K_size // 2
-    fig, ax = plt.subplots(1, 3, figsize=(14, 2), gridspec_kw={'width_ratios': [1, 2, 2]})
-    if use_c0:
-        K_stack = [np.clip(np.zeros(Ks[0].shape) + sum(K / 3 for k, K in zip(kernels, Ks) if k['c0'] == l), 0, 1) for l
-                   in range(3)]
-    else:
-        K_stack = Ks[:3]
-    ax[0].imshow(np.dstack(K_stack), cmap=cmap, interpolation="nearest", vmin=0)
-    ax[0].title.set_text('kernels Ks')
-    X_stack = [K[K_mid, :] for K in nKs]
-    ax[1].plot(range(K_size), np.asarray(X_stack).T)
-    ax[1].title.set_text('Ks cross-sections')
-    ax[1].set_xlim([K_mid - R - 3, K_mid + R + 3])
-    x = np.linspace(0, K_sum, 1000)
-    G_stack = [growth(x, k['m'], k['s']) * k['h'] for k in kernels]
-    ax[2].plot(x, np.asarray(G_stack).T)
-    ax[2].axhline(y=0, color='grey', linestyle='dotted')
-    ax[2].title.set_text('growths Gs')
-    return fig
 
-### EVOLVING ORBIUM ####
-## LOAD ORBIUM ##
+
+##### EVOLVING ORBIUMS ######
+## CONSTANTS ##
+
 orbium = {"name": "Orbium", "R": 13, "T": 10, "m": 0.15, "s": 0.015, "b": [1],
           "cells": [[0, 0, 0, 0, 0, 0, 0.1, 0.14, 0.1, 0, 0, 0.03, 0.03, 0, 0, 0.3, 0, 0, 0, 0],
                     [0, 0, 0, 0, 0, 0.08, 0.24, 0.3, 0.3, 0.18, 0.14, 0.15, 0.16, 0.15, 0.09, 0.2, 0, 0, 0, 0],
@@ -99,208 +85,100 @@ orbium = {"name": "Orbium", "R": 13, "T": 10, "m": 0.15, "s": 0.015, "b": [1],
                     [0, 0, 0, 0, 0, 0.08, 0.21, 0.21, 0.22, 0.29, 0.36, 0.39, 0.37, 0.33, 0.26, 0.18, 0.09, 0, 0, 0],
                     [0, 0, 0, 0, 0, 0, 0.03, 0.13, 0.19, 0.22, 0.24, 0.24, 0.23, 0.18, 0.13, 0.05, 0, 0, 0, 0],
                     [0, 0, 0, 0, 0, 0, 0, 0, 0.02, 0.06, 0.08, 0.09, 0.07, 0.05, 0.01, 0, 0, 0, 0, 0]]
-          }
+          }  # load orbium
 theta = [orbium[i] for i in ["R", "T", "m", "s", "b"]]  # save paramters
-
-##### CONFIGURE ENVIRONMENT ###
-## CONSTANTS ##
-bell = lambda x, m, s: np.exp(-((x - m) / s) ** 2 / 2)  # Gaussian function
-size = 64;
+size = 64
+mid = size // 2
 cx, cy = 20, 20
-mid = size // 2;
-C = np.asarray(orbium["cells"])
+C = np.asarray(orbium["cells"])  # Initial configuration of cells
 
+"""Load learning channel, A"""
+A = np.zeros([size, size])  # Initialise learning channel, A
+A[cx:cx + C.shape[0], cy:cy + C.shape[1]] = C  # Load initial configurations into learning channel)
 
-def learning_kernel(parameters, fourier=False):
-    """Create kernel for learning channel"""
-    R = parameters[0]
-    D = np.linalg.norm(np.asarray(np.ogrid[-mid:mid, -mid:mid]) + 1) / R  # create distance matrix
-    K = (D < 1) * bell(D, 0.5, 0.15)  ## Transform all distances within radius 1 along smooth gaussian gradient
-    K = K / np.sum(K)  # Normalise between 0:1
-    if fourier:
-        return np.fft.fft2(np.fft.fftshift(K))  # fourier transform
-    else:
-        return K
-
-
-#### FUNCTIONS #####
-def load_learning():
-    """Load learning channel"""
-    A = np.zeros([size, size])  # Initialise learning channel, A
-    A[cx:cx + C.shape[0], cy:cy + C.shape[1]] = C  # Load orbium initial configurations into learning channel
-    return A
-
-
-def load_obstacles(n, r=5, seed = 0):
+### CHANNEL FUNCTIONS ###
+def load_obstacles(n, r=5, size=size, use_seed=False,seed=0):
     """Load obstacle channel with random configuration
     of n obstacles with radius r"""
     # Sample center point coordinates a, b
-    #np.random.seed(seed)
+    if use_seed:
+        np.random.seed(seed)
     O = np.zeros([size, size])
     for i in range(n):
         mid_point = tuple(np.random.randint(0, size - 1, 2))
         O[mid_point[0]:mid_point[0] + r, mid_point[1]:mid_point[1] + r] = 1  # load obstacles
     return O
 
+def learning_kernel(R, mid=mid, fourier=True):
+    """Create and return learning Kernel"""
+    D = np.linalg.norm(np.ogrid[-mid:mid, -mid:mid])/R
+    K = (D < 1) * bell(D, 0.5, 0.15)  ## Transform all distances within radius 1 along smooth gaussian gradient
+    K = K / np.sum(K)  # Normalise between 0:1
+    if fourier:
+        fK = np.fft.fft2(np.fft.fftshift(K))  # fourier transform kernel
+        return fK
+    else:
+        return K
 
-def learning_growth(U, parameters=1):
-    """Define growth of learning channel cell according to neighbourhood values U.
-    Take mean and std from life form parameters"""
-    m = 0.135
-    s = 0.015
+### GROWTH FUNCTIONS ####
+bell = lambda x, m, s: np.exp(-((x - m) / s) ** 2 / 2)  # Gaussian function
+
+def growth_render(U):
+    """Growth function specifically for render-check.
+    This function does not take mean and std as arguments, since they
+    are set as globals when rendering"""
     return bell(U, m, s) * 2 - 1
 
 
+def growth(U, m, s):
+    """Growth function to use in manual simulation"""
+    return bell(U, m, s) * 2 - 1
+
 def obstacle_growth(U):
-    """Define growth of learning channel according to overlap with obstacles"""
+    """Defines how creatures grow (shrink) with obstacles"""
     return -10 * np.maximum(0, (U - 0.001))
 
-
+## RENDERING ###
 def update(i):
+    """Update function for rendering. All properties made global beforehand"""
     global As, img
-    U1 = convolve2d(As[0], K, mode="same", boundary="wrap")
-    # A = np.clip(A + 1/T*(growth(U1)), 0, 1)
-    As[0] = np.clip(As[0] + 1 / T * (learning_growth(U1) + obstacle_growth(O)), 0, 1)
-    img.set_array(sum(As))
+    U1 = np.real(np.fft.ifft2(fK*np.fft.fft2(As[0])))
+    #U1 = convolve2d(As[0], K, mode="same", boundary="wrap")
+    """Update learning channel with growth from both obstacle and 
+    growth channel"""
+    As[0] = np.clip(As[0] + 1 / T * (growth_render(U1) + obstacle_growth(As[1])), 0, 1)
+    img.set_array(sum(As))  # Sum two channels to create one channel
     return img,
 
-"""
-# Test one round
-globals().update(orbium)
-O = load_obstacles(n=3)
-K = learning_kernel(parameters=theta)
-As = [load_learning(), load_obstacles(n=3)]
-fig = figure_world(sum(As))
-anim = animation.FuncAnimation(fig, update, frames=200, interval=20)
-anim.save("results/test_space.gif", writer="imagemagick")"""
 
-## Test survival based on lack of cells in A
-def update_man(A, K, parameters):
-    """One time step of Lenia, takes current grid A and returns one update"""
-    T = parameters[1]
-    U1 = np.real(np.fft.ifft2(K*np.fft.fft2(A)))
-    #U1 = convolve2d(A, K, mode="same", boundary="wrap")
-    # A = np.clip(A + 1/T*(growth(U1)), 0, 1)
-    A = np.clip(A + 1 / T * (learning_growth(U1, parameters) + obstacle_growth(O)), 0, 1)
-    return A
+def make_dict(parameters):
+    """Take list of parameters and convert to dictionary"""
+    dict = {}
+    keys = ["R", "T", "m", "s", "b"]
+    for i in range(len(parameters)):
+        dict[keys[i]] = parameters[i]
+    return dict
 
+def render(parameters, filename, A=A, obstacles=5, r=8, seed=0):
+    """Render Lenia animation for cross check from input set of parameters"""
+    parameters = make_dict(parameters)
+    globals().update(parameters)  # set as globals
 
+    # Load assets
+    O = load_obstacles(n=obstacles, r=r, use_seed= True, seed=seed)
+    K = learning_kernel(R, fourier=False)
+    global fK, As
+    fK = learning_kernel(R)
+    As = deepcopy([A, O])
 
-def get_t(A, O, parameters):
-    """Run simulation with input learning channel A,
-     and obstacle configuration O.
+    figure_asset(K, growth_render)
+    plt.savefig("results/"+filename+"_kernel.png")
 
-     Return time until life form dissolves"""
-
-    K = learning_kernel(parameters, fourier=True)  # Get kernel
-
-    status = np.sum(A)
-    t = 0  # Set time
-    while (status > 0) & (t < 1000):  # While there are still cells in the learning channel
-        t += 1  # Record time
-        #plt.matshow(A+O)
-        A = update_man(A, K, parameters)  # Update channel
-        status = np.sum(A)  # update sum
-    return t
-
-# One round
-np.random.seed(0)
-A = load_learning()
-O = load_obstacles(n=3)
-get_t(A, 0, parameters=theta)
-
-def mutate(p):
-    """Mutate input parameter p"""
-    return np.exp(np.log(p) + np.random.uniform(low=-0.2, high=0.2))
-
-def crude_evolve(parameters, seed=0):
-    """Run one round of evolutionary optimisation.
-    From input parameters, mutate one parameter chosen at random.
-    Run simulations on both wild_type and mutant on same obstacle configuration.
-
-    Calculate fitness from survival time, and return winning set of parameters."""
-    A = load_learning()
-    np.random.seed(seed)  # Set seed
-    wild_type = parameters[:]
-    mutant_type = parameters[:]
-    x = np.random.randint(0, len(parameters)-1)  # Choose random index from parameter range
-    print(x)
-    mutant_type[x] = mutate(mutant_type[x])  # Mutate parameter in mutant type
-    print(wild_type)
-    print(mutant_type)
-
-    O = load_obstacles(n=3)
-    tm = get_t(A, O, mutant_type)
-    tw = get_t(A, O, wild_type)
-
-    # Calculate selection coefficient from survival time
-    s = (tm - tw)/tw
-    pfix = 2*s  # probability of fixation
-
-    # Draw random n, 0 <= n <= 1
-    n = np.random.sample(1)[0]
-    if pfix >= n:
-        print("Accept mutation")
-        return mutant_type
-    elif pfix < n:
-        print("Reject Mutation")
-        return wild_type
-
-def run_one(parameters, seed=0):
-    """Run one round of evolutionary optimisation.
-    From input parameters, mutate one parameter chosen at random.
-    Run simulations on 10 wild_type and mutant: Each wild-mutant couple
-    experience same obstacle configuration, and configuration changes
-    ten times for each group.
-
-    Calculate overall stochastic fitness of mutant and return winning set of parameters"""
-    A = load_learning()
-    #np.random.seed(seed)  # Set seed
-    wild_type = parameters[:]
-    mutant_type = parameters[:]
-    x = np.random.randint(0, len(parameters)-1)  # Choose random index from parameter range
-    mutant_type[x] = mutate(mutant_type[x])  # Mutate parameter in mutant type
-
-
-    # Run mutant and wild parameters over 10 obstacle configurations
-    tm, tw = 0, 0  # Survival time for mutant, wild type
-    for i in range(10):
-        np.random.seed(i)  # Each with own seed
-        O = load_obstacles(n=3)  # Load obstacle configuration
-        tm += get_t(A, O, mutant_type)
-        tw += get_t(A, O, wild_type)
-
-    # Calculate selection coefficient from survival time
-    s = (tm - tw)/tw
-    pfix = 2*s  # probability of fixation
-
-    # Draw random n, 0 <= n <= 1
-    n = np.random.sample(1)[0]
-    if pfix >= n:
-        print("Accept mutation")
-        return mutant_type
-    elif pfix < n:
-        print("Reject Mutation")
-        return wild_type
-
-def optimise(parameters):
-    """Run mutation/selection until optimised function sticks
-
-    To start with, run until 10 mutations are accepted. Check output orbium"""
-    mutation_count = 0
-
-    par_in = parameters[:]
-    gen_count = 0
-
-    while (mutation_count < 2) & (gen_count < 100):
-        par_out = run_one(par_in)
-        gen_count += 1
-        if par_out != par_in:
-            mutation_count += 1
-            print(mutation_count, "mutation")
-            par_in = par_out[:]
-
-    return par_out
+    print("rendering animation...")
+    fig = figure_world(sum(As))
+    anim = animation.FuncAnimation(fig, update, frames=200, interval=20)
+    anim.save("results/"+filename+"_anim.gif", writer="imagemagick")
+    print("process complete")
 
 def save_parameters(parameters, filename, cells):
     ### NEED TO FIGURE OUT A SOLUTION TO B
@@ -319,4 +197,105 @@ def save_parameters(parameters, filename, cells):
             csvwrite.writerow(i)
 
     return dict
+
+
+### EVOLUTION  ###
+def mutate(p):
+    """Mutate input parameter p"""
+    return np.exp(np.log(p) + np.random.uniform(low=-0.2, high=0.2))
+
+def prob_fixation(wild_time, mutant_time):
+    """Return probability of fixation given time survived by mutant and wild type"""
+    s = (mutant_time-wild_time)/wild_time  # selection coefficient
+    return 2*s # probability of fixation
+
+def update_man(grid, obstacle, fK, T, m, s, t=0, show = False):
+    """Update one time step of Lenia growth.
+    grid = A
+    obstacle = o"""
+    U1 = np.real(np.fft.ifft2(fK*np.fft.fft2(grid)))
+    """Update learning channel with growth from both obstacle and 
+    growth channel"""
+    grid = np.clip(grid + 1 / T * (growth(U1, m, s) + obstacle_growth(obstacle)), 0, 1)
+    if show & (t == 5):  # Feature for cross check
+        As = [grid, o]
+        plt.matshow(sum(As))
+    return grid
+
+def run_one(grid, O, K, parameters, show=False):
+    """Run creature of given parameters in given obstacle configuration until it dies.
+    Return time taken to die"""
+    status = np.sum(grid)
+    t = 0  #  set timer
+    while status > 0:  # While there are still cells in the grid
+        t += 1  # add one to timer
+        if t%1000 == 0:
+            print(t)
+        if t > 10000:
+            return t
+        grid = update_man(grid, obstacle=O, fK= K, T=parameters[1], m= parameters[2], s=parameters[3], t=t, show = show)
+        status = np.sum(grid)  # Check sum
+    return t
+
+def get_t(parameters, obstacle_seed, n=5, r=8):
+    """Get survival time for input parameters"""
+    k = learning_kernel(R=parameters[0])
+    o = load_obstacles(n=n, r=r, use_seed=True, seed=obstacle_seed)
+    plt.matshow(o)
+    return run_one(grid=A, O=o, K=k, parameters=parameters)
+
+
+def select_one(parameters, n=5, A=A):
+    """Mutate one parameter and assess fitness agaisnt wild type over ten simulations
+    in different obstacles environments. Return the winning set of parameters"""
+    ## Load wild and mutant types ##
+    wild_type = parameters[:]
+    mutant_type = parameters[:]
+    x = np.random.randint(0, len(parameters)-1)  # Choose random index from parameter range
+    mutant_type[x] = mutate(mutant_type[x])  # Mutate parameter
+
+    # Load kernels for each
+    fK_wild = learning_kernel(R=wild_type[0])
+    fK_mutant = learning_kernel(R=mutant_type[0])
+
+    # Run 10 pairs of mutant/wild type over 10 obstacle configurations
+    t_wild, t_mutant = 0, 0  # set survival times
+    for i in range(10):
+        print("Trial: ", i)
+        O = load_obstacles(n=5, r=8)
+        t_wild += run_one(grid= A, O=O,K = fK_wild, parameters=wild_type)
+        t_mutant += run_one(grid = A, O=O, K=fK_mutant, parameters=mutant_type)
+
+    print("WILD TIME:", t_wild)
+    print("MUTANT TIME:", t_mutant)
+    # Get probability of fixation
+    p_fix = prob_fixation(wild_time=t_wild, mutant_time=t_mutant)
+
+    x = np.random.uniform(0, 1)
+    if p_fix >= x:
+        print("Accept mutant")
+        return mutant_type
+    else:
+        print("Reject mutant")
+        return wild_type
+
+def optimise(parameters, fixation, seed):
+    """Run evolution for x number of mutations.
+    Return optimal parameters"""
+    np.random.seed(seed)
+    mutations = 0  # initiate mutation count
+    fix = 0  # initiate fixation count
+    par_in = parameters[:]
+
+    while fix < fixation:
+        par_out = select_one(par_in)
+        if par_out != par_in:  # if winning set of parameters are different
+            par_in = deepcopy(par_out)  # update par_in
+            mutations += 1
+            fix = 0  # reset fixation
+        else:
+            fix += 1
+    save_parameters(par_out, "fixation_"+str(fixation)+"_seed_"+str(seed), C)
+    return par_out
+
 
