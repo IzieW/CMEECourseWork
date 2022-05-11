@@ -256,12 +256,17 @@ def optimise(parameters):
     """Run evolution for x number of mutations.
     Return optimal parameters"""
     mutations = 0  # initiate mutation count
+    fix = 0  # initiate fixation count
     par_in = parameters[:]
-    while mutations < 5:
+
+    while fix < 1000:
         par_out = select_one(par_in)
         if par_out != par_in:  # if winning set of parameters are different
             par_in = deepcopy(par_out)  # update par_in
             mutations += 1
+            fix = 0  # reset fixation
+        else:
+            fix += 1
     return par_out
 
 def save_parameters(parameters, filename, cells):
