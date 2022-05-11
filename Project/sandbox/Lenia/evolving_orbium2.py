@@ -97,11 +97,12 @@ A = np.zeros([size, size])  # Initialise learning channel, A
 A[cx:cx + C.shape[0], cy:cy + C.shape[1]] = C  # Load initial configurations into learning channel)
 
 ### CHANNEL FUNCTIONS ###
-def load_obstacles(n, r=5, size=size, seed=0):
+def load_obstacles(n, r=5, size=size, use_seed=False,seed=0):
     """Load obstacle channel with random configuration
     of n obstacles with radius r"""
     # Sample center point coordinates a, b
-    #np.random.seed(seed)
+    if use_seed:
+        np.random.seed(seed)
     O = np.zeros([size, size])
     for i in range(n):
         mid_point = tuple(np.random.randint(0, size - 1, 2))
@@ -164,7 +165,7 @@ def render(parameters, filename, A=A, obstacles=5, r=8, seed=0):
     globals().update(parameters)  # set as globals
 
     # Load assets
-    O = load_obstacles(n=obstacles, r=r, seed=seed)
+    O = load_obstacles(n=obstacles, r=r, use_seed= True, seed=seed)
     K = learning_kernel(R, fourier=False)
     global fK, As
     fK = learning_kernel(R)
@@ -178,6 +179,25 @@ def render(parameters, filename, A=A, obstacles=5, r=8, seed=0):
     anim = animation.FuncAnimation(fig, update, frames=200, interval=20)
     anim.save("results/"+filename+"_anim.gif", writer="imagemagick")
     print("process complete")
+
+def save_parameters(parameters, filename, cells):
+    ### NEED TO FIGURE OUT A SOLUTION TO B
+    dict = {}
+    keys = ["R", "T", "m", "s", "b"]
+    for i in range(len(parameters)):
+        dict[keys[i]] = parameters[i]
+
+    with open("results/parameters/parameters_"+filename+".csv", "w") as f:
+        csvwrite = csv.writer(f)
+        for k in dict:
+                csvwrite.writerow([k, dict[k]])
+    with open("results/parameters/cells_"+filename+".csv", "w") as f:
+        csvwrite = csv.writer(f)
+        for i in cells:
+            csvwrite.writerow(i)
+
+    return dict
+
 
 ### EVOLUTION  ###
 def mutate(p):
@@ -252,14 +272,15 @@ def select_one(parameters, n=5, A=A):
         print("Reject mutant")
         return wild_type
 
-def optimise(parameters):
+def optimise(parameters, fixation, seed):
     """Run evolution for x number of mutations.
     Return optimal parameters"""
+    np.random.seed(seed)
     mutations = 0  # initiate mutation count
     fix = 0  # initiate fixation count
     par_in = parameters[:]
 
-    while fix < 1000:
+    while fix < fixation:
         par_out = select_one(par_in)
         if par_out != par_in:  # if winning set of parameters are different
             par_in = deepcopy(par_out)  # update par_in
@@ -267,23 +288,7 @@ def optimise(parameters):
             fix = 0  # reset fixation
         else:
             fix += 1
+    save_parameters(par_out, "fixation_"+str(fixation)+"_seed_"+str(seed), C)
     return par_out
 
-def save_parameters(parameters, filename, cells):
-    ### NEED TO FIGURE OUT A SOLUTION TO B
-    dict = {}
-    keys = ["R", "T", "m", "s", "b"]
-    for i in range(len(parameters)):
-        dict[keys[i]] = parameters[i]
-
-    with open("results/parameters/parameters_"+filename+".csv", "w") as f:
-        csvwrite = csv.writer(f)
-        for k in dict:
-                csvwrite.writerow([k, dict[k]])
-    with open("results/parameters/cells_"+filename+".csv", "w") as f:
-        csvwrite = csv.writer(f)
-        for i in cells:
-            csvwrite.writerow(i)
-
-    return dict
 
