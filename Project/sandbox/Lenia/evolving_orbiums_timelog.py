@@ -263,5 +263,25 @@ def optimise(parameters, fixation, seed):
     save_csv(time_log, name=filename+"_times")
     return par_out
 
+def reoptimise(parameters, trials, seed):
+    """Run mutation and selection for runs number of rums
+    Function designed for zeroing in on interesting timespots to see the parameters returned"""
+    global filename
+    filename = "trials_"+str(trials)+"_seed_"+str(seed)
+    np.random.seed(seed)
+    mutations = 0  # initiate mutation count
+    par_in = parameters[:]
+    runs = 0   # initiate run count
+    while runs < trials:
+        par_out = select_one(par_in)
+        if par_out != par_in:  # if winning set of parameters are different
+            par_in = deepcopy(par_out)  # update par_in
+        runs += 1  # add to timer
+        if runs == 40:
+            save_parameters(par_out, filename="trials_40_seed_0", cells=C)
+
+    save_parameters(par_out, filename, C)
+    save_csv(time_log, name=filename+"_times")
+    return par_out
 
 # TRACK TIME OVER OPTIMISATION RUNS
