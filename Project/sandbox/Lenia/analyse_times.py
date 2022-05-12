@@ -11,8 +11,7 @@ colorscheme = ["darkslategrey", "lightslategray", "slateblue"]
 def load_data(filename):
     return pd.read_csv("results/time_logs/"+filename+"_times.csv")
 
-dat = load_data(filename)
-
+dat = load_data("fixation_25_seed_0")
 runs = np.arange(len(dat))
 
 
@@ -21,5 +20,5 @@ plt.xlabel("selection step")
 plt.ylabel("survival time")
 plt.suptitle("Orbium survival time over selection process")
 plt.title("fixation 20, seed 0", fontsize = 10)
-plt.vlines(33, ymin=0, ymax = 10000, colors=colorscheme[1], linestyles="dashed", linewidth=1)
+plt.vlines(33, ymin=0, ymax = 10000, colors="lightslategray", linestyles="dashed", linewidth=1)
 plt.annotate("fixation_10", xy=(23, 4000), xytext=(23, 4000), fontsize=7)
