@@ -4,13 +4,9 @@
 #### PREPARATION ####
 ## IMPORTS ##
 import numpy as np
-import scipy as sc
-from scipy.signal import convolve2d
 import matplotlib.pylab as plt
-from matplotlib import animation
 from copy import deepcopy
 import pandas as pd
-import sys
 import csv
 # Silence warnings
 np.warnings.filterwarnings("ignore", category=np.VisibleDeprecationWarning)  # Silence warnings
@@ -54,6 +50,8 @@ def figure_asset(K, growth, cmap="viridis", K_sum=1, bar_K=False):
     ax[2].axhline(y=0, color="grey", linestyle="dotted")
     ax[2].title.set_text("Growth G")
     return fig
+
+
 def save_parameters(parameters, filename, cells):
     ### NEED TO FIGURE OUT A SOLUTION TO B
     dict = {}
