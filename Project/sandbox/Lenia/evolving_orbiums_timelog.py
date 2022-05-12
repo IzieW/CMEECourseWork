@@ -72,7 +72,20 @@ def save_parameters(parameters, filename, cells):
 def save_csv(data, name):
     data.to_csv("results/"+name+"_times.csv", encoding = "utf-8", index=False)
 
-# PREPARE ENVIRONMENT #
+
+#### MEASUREMENTS AND LOGS #####
+time_log = pd.DataFrame(columns=["wild", "mutant"])
+def record_time(t_wild, t_mutant):
+    """Record timeline"""
+    global time_log
+    x = pd.DataFrame([[t_wild/10, t_mutant/10]], columns=["wild", "mutant"]) # record averages
+    time_log = pd.concat([time_log, x])
+
+parameter_log = pd.DataFrame(columns=["R", "T", "m", "s", "m", "b"])
+def record_solution(solution):
+
+
+##### PREPARE ENVIRONMENT ######
 orbium = {"name": "Orbium", "R": 13, "T": 10, "m": 0.15, "s": 0.015, "b": [1],
           "cells": [[0, 0, 0, 0, 0, 0, 0.1, 0.14, 0.1, 0, 0, 0.03, 0.03, 0, 0, 0.3, 0, 0, 0, 0],
                     [0, 0, 0, 0, 0, 0.08, 0.24, 0.3, 0.3, 0.18, 0.14, 0.15, 0.16, 0.15, 0.09, 0.2, 0, 0, 0, 0],
@@ -139,7 +152,7 @@ def obstacle_growth(U):
     """Defines how creatures grow (shrink) with obstacles"""
     return -10 * np.maximum(0, (U - 0.001))
 
-###### SIMULATIONS #######
+###### SIMULATIONS AND EVOLUTION #######
 def mutate(p):
     """Mutate input parameter p"""
     return np.exp(np.log(p) + np.random.uniform(low=-0.2, high=0.2))
@@ -199,14 +212,6 @@ def selection(t_wild, t_mutant):
         # REJECT MUTATION
         return False
 
-time_log = pd.DataFrame(columns=["wild", "mutant"])
-def record_time(t_wild, t_mutant):
-    """Record timeline"""
-    global time_log
-    x = pd.DataFrame([[t_wild/10, t_mutant/10]], columns=["wild", "mutant"]) # record averages
-    time_log = pd.concat([time_log, x])
-
-
 
 def select_one(parameters, n=5, A=A):
     """Mutate one parameter and assess fitness agaisnt wild type over ten simulations
@@ -239,6 +244,7 @@ def select_one(parameters, n=5, A=A):
         return wild_type
 
 
+#### OPTIMISATION PROCESS  #####
 def optimise(parameters, fixation, seed):
     """Run evolution for x number of mutations.
     Return optimal parameters"""
@@ -260,6 +266,7 @@ def optimise(parameters, fixation, seed):
     save_parameters(par_out, filename, C)
     save_csv(time_log, name=filename+"_times")
     return par_out
+
 
 def reoptimise(parameters, trials, seed):
     """Run mutation and selection for runs number of rums
