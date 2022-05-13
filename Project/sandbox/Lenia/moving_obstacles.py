@@ -160,7 +160,7 @@ def update(i):
     #U1 = convolve2d(As[0], K, mode="same", boundary="wrap")
     """Update learning channel with growth from both obstacle and 
     growth channel"""
-    As[0] = np.clip(As[0] + 1 / T * (growth_render(U1) + obstacle_growth(As[1])), 0, 1)
+    As[0] = np.clip(As[0] + 1 / T * (growth(U1) + obstacle_growth(As[1])), 0, 1)
     As[1] = convolve2d(As[1], k_up, mode="same", boundary="wrap")  # Update obstacle
     img.set_array(sum(As))  # Sum two channels to create one channel
     return img,
