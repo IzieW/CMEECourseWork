@@ -1,8 +1,8 @@
 # !/usr/bin/env python3
 """Take discovered parameters and analyse over a series of tests"""
 
-#### PREPARATION ####
-## IMPORTS ##
+############################### PREPARATION #######################################
+# IMPORTS #
 import numpy as np
 import scipy as sc
 from scipy.signal import convolve2d
@@ -12,9 +12,11 @@ from copy import deepcopy
 import pandas as pd
 import sys
 import csv
+
 # Silence warnings
 np.warnings.filterwarnings("ignore", category=np.VisibleDeprecationWarning)  # Silence warnings
-# Visualisation functions
+
+# Visualisation functions #
 def figure_world(A, cmap="viridis"):
     """Set up basic graphics of unpopulated, unsized world"""
     global img  # make final image global
@@ -54,6 +56,8 @@ def figure_asset(K, growth, cmap="viridis", K_sum=1, bar_K=False):
     ax[2].axhline(y=0, color="grey", linestyle="dotted")
     ax[2].title.set_text("Growth G")
     return fig
+
+# loading, saving, transforming data #
 def save_parameters(parameters, filename, cells):
     ### NEED TO FIGURE OUT A SOLUTION TO B
     dict = {}
@@ -73,9 +77,27 @@ def save_parameters(parameters, filename, cells):
     return dict
 def save_csv(data, name):
     data.to_csv("results/"+name+"_times.csv", encoding = "utf-8", index=False)
+def load_parameters(filename):
+    """Load parameters from csv"""
+    dict = {}
+    with open("results/parameters/parameters_" + filename + ".csv", "r") as f:
+        csvread = csv.reader(f)
+        for row in csvread:
+            if row[0] == "b":
+                dict[row[0]] = [float(i) for i in row[1].strip("[]").split(",")]
+            else:
+                dict[row[0]] = float(row[1])
+    cells = []
+    with open("results/parameters/cells_" + filename + ".csv", "r") as f:
+        csvread = csv.reader(f)
+        for i in csvread:
+            cells.append([float(s) for s in i])
+    dict["cells"] = cells
+    return dict
+def get_parameters(dict):
+    return [dict[i] for i in ["R", "T", "m", "s", "b"]]
 
-
-#### MEASUREMENTS AND LOGS #####
+# Measurements and logs #
 time_log = pd.DataFrame(columns=["wild", "mutant"])
 def record_time(t_wild, t_mutant):
     """Record timeline"""
@@ -83,54 +105,15 @@ def record_time(t_wild, t_mutant):
     x = pd.DataFrame([[t_wild/10, t_mutant/10]], columns=["wild", "mutant"]) # record averages
     time_log = pd.concat([time_log, x])
 
-parameter_log = pd.DataFrame(columns=["R", "T", "m", "s", "m", "b"])
+def get_t(parameters, obstacle_seed, n=5, r=8):
+    """Get survival time for input parameters"""
+    if type(parameters) == dict:
+        parameters = get_parameters(parameters)
+    k = learning_kernel(R=parameters[0])
+    o = load_obstacles(n=n, r=r, use_seed=True, seed=obstacle_seed)
+    return run_one(grid=A, O=o, K=k, parameters=parameters)
 
-def growth_render(U):
-    """Growth function specifically for render-check.
-    This function does not take mean and std as arguments, since they
-    are set as globals when rendering"""
-    return bell(U, m, s) * 2 - 1
-
-def update(i):
-    """Update function for rendering. All properties made global beforehand"""
-    global As, img
-    U1 = np.real(np.fft.ifft2(fK*np.fft.fft2(As[0])))
-    #U1 = convolve2d(As[0], K, mode="same", boundary="wrap")
-    """Update learning channel with growth from both obstacle and 
-    growth channel"""
-    As[0] = np.clip(As[0] + 1 / T * (growth_render(U1) + obstacle_growth(As[1])), 0, 1)
-    img.set_array(sum(As))  # Sum two channels to create one channel
-    return img,
-def make_dict(parameters):
-    """Take list of parameters and convert to dictionary"""
-    dict = {}
-    keys = ["R", "T", "m", "s", "b"]
-    for i in range(len(parameters)):
-        dict[keys[i]] = parameters[i]
-    return dict
-
-def render(parameters, filename, A=A, obstacles=5, r=8, seed=0):
-    """Render Lenia animation for cross check from input set of parameters"""
-    parameters = make_dict(parameters)
-    globals().update(parameters)  # set as globals
-
-    # Load assets
-    O = load_obstacles(n=obstacles, r=r, use_seed= True, seed=seed)
-    K = learning_kernel(R, fourier=False)
-    global fK, As
-    fK = learning_kernel(R)
-    As = deepcopy([A, O])
-
-    figure_asset(K, growth_render)
-    plt.savefig("results/"+filename+"_kernel.png")
-
-    print("rendering animation...")
-    fig = figure_world(sum(As))
-    anim = animation.FuncAnimation(fig, update, frames=200, interval=20)
-    anim.save("results/"+filename+"_anim.gif", writer="imagemagick")
-    print("process complete")
-
-##### PREPARE ENVIRONMENT ######
+############################### LOAD ENVIRONMENT ######################################
 orbium = {"name": "Orbium", "R": 13, "T": 10, "m": 0.15, "s": 0.015, "b": [1],
           "cells": [[0, 0, 0, 0, 0, 0, 0.1, 0.14, 0.1, 0, 0, 0.03, 0.03, 0, 0, 0.3, 0, 0, 0, 0],
                     [0, 0, 0, 0, 0, 0.08, 0.24, 0.3, 0.3, 0.18, 0.14, 0.15, 0.16, 0.15, 0.09, 0.2, 0, 0, 0, 0],
@@ -197,7 +180,8 @@ def obstacle_growth(U):
     """Defines how creatures grow (shrink) with obstacles"""
     return -10 * np.maximum(0, (U - 0.001))
 
-###### SIMULATIONS AND EVOLUTION #######
+############################# SIMULATIONS AND EVOLUTION ################################
+# Simulation functions #
 def mutate(p):
     """Mutate input parameter p"""
     return np.exp(np.log(p) + np.random.uniform(low=-0.2, high=0.2))
@@ -219,14 +203,6 @@ def update_man(grid, obstacle, fK, T, m, s, t=0, show = False):
         As = [grid, o]
         plt.matshow(sum(As))
     return grid
-
-
-def get_t(parameters, obstacle_seed, n=5, r=8):
-    """Get survival time for input parameters"""
-    k = learning_kernel(R=parameters[0])
-    o = load_obstacles(n=n, r=r, use_seed=True, seed=obstacle_seed)
-    plt.matshow(o)
-    return run_one(grid=A, O=o, K=k, parameters=parameters)/10
 
 def selection(t_wild, t_mutant):
     """Get winning solution based on survival times.
@@ -313,7 +289,6 @@ def optimise(parameters, fixation, seed):
     return par_out
 
 
-
 def reoptimise(parameters, trials, seed):
     """Run mutation and selection for runs number of rums
     Function designed for zeroing in on interesting timespots to see the parameters returned"""
@@ -335,4 +310,49 @@ def reoptimise(parameters, trials, seed):
     save_csv(time_log, name=filename+"_times")
     return par_out
 
-reoptimise(theta, 2, 0)
+### RENDERING ###
+
+def update(i):
+    """Update function for rendering. All properties made global beforehand"""
+    global As, img
+    U1 = np.real(np.fft.ifft2(fK*np.fft.fft2(As[0])))
+    #U1 = convolve2d(As[0], K, mode="same", boundary="wrap")
+    """Update learning channel with growth from both obstacle and 
+    growth channel"""
+    As[0] = np.clip(As[0] + 1 / T * (growth_render(U1) + obstacle_growth(As[1])), 0, 1)
+    img.set_array(sum(As))  # Sum two channels to create one channel
+    return img,
+def make_dict(parameters):
+    """Take list of parameters and convert to dictionary"""
+    dict = {}
+    keys = ["R", "T", "m", "s", "b"]
+    for i in range(len(parameters)):
+        dict[keys[i]] = parameters[i]
+    return dict
+
+def growth_render(U):
+    """Growth function specifically for render-check.
+    This function does not take mean and std as arguments, since they
+    are set as globals when rendering"""
+    return bell(U, m, s) * 2 - 1
+
+def render(parameters, filename, A=A, obstacles=5, r=8, seed=0):
+    """Render Lenia animation for cross check from input set of parameters"""
+    parameters = make_dict(parameters)
+    globals().update(parameters)  # set as globals
+
+    # Load assets
+    O = load_obstacles(n=obstacles, r=r, use_seed= True, seed=seed)
+    K = learning_kernel(R, fourier=False)
+    global fK, As
+    fK = learning_kernel(R)
+    As = deepcopy([A, O])
+
+    figure_asset(K, growth_render)
+    plt.savefig("results/"+filename+"_kernel.png")
+
+    print("rendering animation...")
+    fig = figure_world(sum(As))
+    anim = animation.FuncAnimation(fig, update, frames=200, interval=20)
+    anim.save("results/"+filename+"_anim.gif", writer="imagemagick")
+    print("process complete")
