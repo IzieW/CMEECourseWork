@@ -74,6 +74,11 @@ class Creature:
         self.s = dict["s"]
         self.b = dict["b"]
 
+        self.A = self.initiate()
+        self.K = self.kernel()
+        self.enviro = 0  # Load and temporarily hold obstacle channels
+        self.enviro_kernel = 0  # Load and temporarily hold obstacle kernels
+
     def figure_world(A, cmap="viridis"):
         """Set up basic graphics of unpopulated, unsized world"""
         global img  # make final image global
@@ -131,7 +136,7 @@ class Creature:
         if verbose:
         print(self.name+" configuration saved to parameters/")
 
-    def initiate_channel(self, size=size, cx=cx, cy=cy, show=False):
+    def initiate(self, size=size, cx=cx, cy=cy, show=False):
         """Initiate learning channel with creature cell configurations"""
         C = np.asarray(self.cells)  # take cells from creature
         A = np.zeros([size, size])  # Initiate grid of dimensions size x size
@@ -158,33 +163,67 @@ class Creature:
         and parameter configuration. Specifically, mean and standard deviation"""
         return Creature.bell(U, self.m, self.s) * 2 - 1
 
-    def update(self, i):
-        """Run stepwise lenia simulation and updates"""
-        global A, img
-        U = np.real(np.fft.ifft2(K*np.fft.fft2(A)))  # Get neighbourhood sum
-        A = np.clip(A + 1/self.T*(self.growth(U)), 0, 1)
-        img.set_array(A)
-        return img
+    def obstacle_growth(self):
+        """Obstacle growth function: Obstacle creates severe negative growth in Life form"""
+        return -10 * np.maximum(0, (self.enviro - 0.001))
 
 
-    def render(self, update=0):
-        """Render Creature in environment"""
-        if not update:
-            update = self.update
-        global A, K
-        A = self.initiate_channel()
-        K = self.kernel()
+    def update_naive(self, i):
+        """Update learning channel by 1/T according to values in the learning channel"""
+        global img
+        U = np.real(np.fft.ifft2(self.K*np.fft.fft2(self.A)))  # Convolve by kernel to get neighbourhood sums
+        self.A = np.clip(self.A + 1/self.T*(self.growth(U)), 0, 1)  # Update A by growth function *1/T
+        img.set_array(self.A)
+        return img,
 
-        fig= Creature.figure_world(A)
-        print("Rendering animation...")
-        anim = animation.FuncAnimation(fig, update, frames=200, interval=20)
-        anim.save("results/"+self.name+"_anim.gif", writer="imagemagick")
-        print("Process complete.")
+    def update_obstacle(self, i):
+        """Update learning channel by 1/T according to values in the learning channel and obstacle channel"""
+        global img
+        U = np.real(np.fft.ifft2(self.K*np.fft.fft2(self.A)))  # Convolve by kernel to get neighbourhood sums
+        self.A = np.clip(self.A + 1/self.T*(self.growth(U)), 0, 1) # + self.obstacle_growth()), 0, 1)  # Update A by growth function *1/T
+        img.set_array(sum([self.A, self.enviro]))
+        return img,
 
-class Obstacle_channel:
-    def __init__(self, n = 3, r= 5, seed=0, dir=0, gradient = 1):
+
+    def update_obstacle_moving(self, i):
+        """Update learning channel by 1/T according to values in the learning channel and obstacle channel"""
+        global img
+        U = np.real(np.fft.ifft2(self.K*np.fft.fft2(self.A)))  # Convolve by kernel to get neighbourhood sums
+        self.enviro = convolve2d(self.enviro, self.enviro_kernel, mode="same", boundary="wrap")
+        self.A = np.clip(self.A + 1/self.T*(self.growth(U) + self.obstacle_growth()), 0, 1)  # Update A by growth function *1/T
+        img.set_array(sum([self.A, self.enviro]))
+        return img,
+
+    def render(self, O=0, direction=0):
+        """Render Lenia simulation using above update functions.
+        O = obstacle configuration. If specified, renders simulation with this obstacle environment.
+        moving = obstacle kernel with desired direction. If specified, renders simulations with moving obstacle environment"""
+        if type(O) != int:  # Weird logic condition to avoid using "if O.any" since will need to check multiple values in O
+            self.enviro = O
+            fig = Creature.figure_world(sum([self.A, self.enviro]))
+            if type(direction) != int:
+                self.enviro_kernel = direction
+                print("Rendering animation...")
+                anim = animation.FuncAnimation(fig, self.update_obstacle_moving, frames=10, interval=20)
+                anim.save("results/"+self.name+"_anim.gif", writer="imagemagick")
+                print("Process complete.")
+            else:
+                print("Rendering animation...")
+                anim = animation.FuncAnimation(fig, self.update_obstacle, frames=10, interval=20)
+                anim.save("results/"+self.name+"_anim.gif", writer="imagemagick")
+                print("Process complete.")
+        else:
+            fig= Creature.figure_world(self.A)
+            print("Rendering animation...")
+            anim = animation.FuncAnimation(fig, self.update_naive, frames=10, interval=20)
+            anim.save("results/"+self.name+"_anim.gif", writer="imagemagick")
+            print("Process complete.")
+
+
+class ObstacleChannel:
+    def __init__(self, n = 3, r= 5, seed=0, dir="up", gradient = 1):
         """Defines obstacle environment.
-        n = number of obstacles
+        n = number of obstacles per QUARTER of grid
         r = obstacle radius
         (if moving): dir = direction of movement [up, down, left, right]
         """
@@ -202,11 +241,12 @@ class Obstacle_channel:
             self.kernel = k
 
 
-    def initiate(self, seed = False, size = Creature.size, gradient=False, mid = Creature.mid):
-        """Initiate obstacle channel at random"""
+    def initiate(self, gradient=False, seed = False, size= Creature.size, mid = Creature.mid):
+        """Initiate obstacle channel at random.
+        Done by initiating half of grid with random obstacle configurations and
+        stiching two halves together to allow more even spacing"""
         if seed:
             np.random.seed(self.seed)
-        # Initiate channel space with self.n number of random obstacles
         o = np.zeros(size*size)
         o[np.random.randint(0, len(o), self.n)] = 1
         o.shape = [size, size]
