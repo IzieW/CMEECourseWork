@@ -17,7 +17,7 @@ np.warnings.filterwarnings("ignore", category=np.VisibleDeprecationWarning)  # S
 
 # CLASSES #
 class Creature:
-    """Load Lenia life form.
+    """Defines a life form, their kernel and growth functions
     R: radius
     T: Time
     m: mean (growth function)
@@ -30,35 +30,49 @@ class Creature:
 
     bell = lambda x, m, s:  np.exp(-((x - m) / s) ** 2 / 2)
 
-    def __init__(self, filename):
-        """Initiate creature from parameters filename"""
-        dict = {}
-        # Load parameters #
-        with open("parameters/"+filename.lower()+"_parameters.csv", "r") as f:
-            csvread = csv.reader(f)
-            for row in csvread:
-                if row[0] == "b":  # Where b is list of values
-                    dict[row[0]] = [float(i) for i in row[1].strip("[]").split(",")]
-                else:
-                    dict[row[0]] = float(row[1])
-        # Load cells #
-        cells = []
-        with open("parameters/"+filename.lower()+"_cells.csv", "r") as f:
-            csvread = csv.reader(f)
-            for row in csvread:
-                cells.append([float(s) for s in row])
-            dict["cells"] = cells
+    species_cells = {"orbium":[[0, 0, 0, 0, 0, 0, 0.1, 0.14, 0.1, 0, 0, 0.03, 0.03, 0, 0, 0.3, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0.08, 0.24, 0.3, 0.3, 0.18, 0.14, 0.15, 0.16, 0.15, 0.09, 0.2, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0.15, 0.34, 0.44, 0.46, 0.38, 0.18, 0.14, 0.11, 0.13, 0.19, 0.18, 0.45, 0, 0, 0],
+                    [0, 0, 0, 0, 0.06, 0.13, 0.39, 0.5, 0.5, 0.37, 0.06, 0, 0, 0, 0.02, 0.16, 0.68, 0, 0, 0],
+                    [0, 0, 0, 0.11, 0.17, 0.17, 0.33, 0.4, 0.38, 0.28, 0.14, 0, 0, 0, 0, 0, 0.18, 0.42, 0, 0],
+                    [0, 0, 0.09, 0.18, 0.13, 0.06, 0.08, 0.26, 0.32, 0.32, 0.27, 0, 0, 0, 0, 0, 0, 0.82, 0, 0],
+                    [0.27, 0, 0.16, 0.12, 0, 0, 0, 0.25, 0.38, 0.44, 0.45, 0.34, 0, 0, 0, 0, 0, 0.22, 0.17, 0],
+                    [0, 0.07, 0.2, 0.02, 0, 0, 0, 0.31, 0.48, 0.57, 0.6, 0.57, 0, 0, 0, 0, 0, 0, 0.49, 0],
+                    [0, 0.59, 0.19, 0, 0, 0, 0, 0.2, 0.57, 0.69, 0.76, 0.76, 0.49, 0, 0, 0, 0, 0, 0.36, 0],
+                    [0, 0.58, 0.19, 0, 0, 0, 0, 0, 0.67, 0.83, 0.9, 0.92, 0.87, 0.12, 0, 0, 0, 0, 0.22, 0.07],
+                    [0, 0, 0.46, 0, 0, 0, 0, 0, 0.7, 0.93, 1, 1, 1, 0.61, 0, 0, 0, 0, 0.18, 0.11],
+                    [0, 0, 0.82, 0, 0, 0, 0, 0, 0.47, 1, 1, 0.98, 1, 0.96, 0.27, 0, 0, 0, 0.19, 0.1],
+                    [0, 0, 0.46, 0, 0, 0, 0, 0, 0.25, 1, 1, 0.84, 0.92, 0.97, 0.54, 0.14, 0.04, 0.1, 0.21, 0.05],
+                    [0, 0, 0, 0.4, 0, 0, 0, 0, 0.09, 0.8, 1, 0.82, 0.8, 0.85, 0.63, 0.31, 0.18, 0.19, 0.2, 0.01],
+                    [0, 0, 0, 0.36, 0.1, 0, 0, 0, 0.05, 0.54, 0.86, 0.79, 0.74, 0.72, 0.6, 0.39, 0.28, 0.24, 0.13, 0],
+                    [0, 0, 0, 0.01, 0.3, 0.07, 0, 0, 0.08, 0.36, 0.64, 0.7, 0.64, 0.6, 0.51, 0.39, 0.29, 0.19, 0.04, 0],
+                    [0, 0, 0, 0, 0.1, 0.24, 0.14, 0.1, 0.15, 0.29, 0.45, 0.53, 0.52, 0.46, 0.4, 0.31, 0.21, 0.08, 0, 0],
+                    [0, 0, 0, 0, 0, 0.08, 0.21, 0.21, 0.22, 0.29, 0.36, 0.39, 0.37, 0.33, 0.26, 0.18, 0.09, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0.03, 0.13, 0.19, 0.22, 0.24, 0.24, 0.23, 0.18, 0.13, 0.05, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0.02, 0.06, 0.08, 0.09, 0.07, 0.05, 0.01, 0, 0, 0, 0, 0]]}
 
-        self.name = filename
-        self.config = dict  # Full creature dictionary
-        self.theta = [dict[i] for i in ["R", "T", "m", "s", "b"]]  # Parameter vector
-        self.cells = dict["cells"]  # Cells only
+    def __init__(self, filename, dict=0, species="orbium"):
+        """Initiate creature from parameters filename, or if file is false, load dictionary"""
+        if filename:
+            dict = {}
+            # Load parameters #
+            with open("parameters/"+filename.lower()+"_parameters.csv", "r") as f:
+                csvread = csv.reader(f)
+                for row in csvread:
+                    if row[0] == "b":  # Where b is list of values
+                        dict[row[0]] = [float(i) for i in row[1].strip("[]").split(",")]
+                    else:
+                        dict[row[0]] = float(row[1])
+            self.name = filename
+        else:
+            self.name=dict["name"]
+        self.cells = Creature.species_cells[species]  # Cells only
         # Each parameter
-        self.R = self.theta[0]
-        self.T = self.theta[1]
-        self.m = self.theta[2]
-        self.s = self.theta[3]
-        self.b = self.theta[4]
+        self.R = dict["R"]
+        self.T = dict["T"]
+        self.m = dict["m"]
+        self.s = dict["s"]
+        self.b = dict["b"]
 
     def figure_world(A, cmap="viridis"):
         """Set up basic graphics of unpopulated, unsized world"""
@@ -156,7 +170,7 @@ class Creature:
     def render(self, update=0):
         """Render Creature in environment"""
         if not update:
-            update= self.update
+            update = self.update
         global A, K
         A = self.initiate_channel()
         K = self.kernel()
@@ -166,4 +180,51 @@ class Creature:
         anim = animation.FuncAnimation(fig, update, frames=200, interval=20)
         anim.save("results/"+self.name+"_anim.gif", writer="imagemagick")
         print("Process complete.")
+
+class Obstacle_channel:
+    def __init__(self, n = 3, r= 5, seed=0, dir=0, gradient = 1):
+        """Defines obstacle environment.
+        n = number of obstacles
+        r = obstacle radius
+        (if moving): dir = direction of movement [up, down, left, right]
+        """
+        self.name = "enviro_"+str(n)+"_obstacle_radius_"+str(r)+"_seed_"+str(seed)
+        self.n = n
+        self.r = r
+        self.seed = seed
+        self.gradient = gradient
+
+        k = np.zeros([3,3])
+        directions = {"up": (0,1), "down":(2, 1), "left":(1, 0), "right":(1, 2)}
+
+        if dir:
+            k[directions[dir]] = 1
+            self.kernel = k
+
+
+    def initiate(self, seed = False, size = Creature.size, gradient=False, mid = Creature.mid):
+        """Initiate obstacle channel at random"""
+        if seed:
+            np.random.seed(self.seed)
+        # Initiate channel space with self.n number of random obstacles
+        o = np.zeros(size*size)
+        o[np.random.randint(0, len(o), self.n)] = 1
+        o.shape = [size, size]
+        # Convolve by one of two kernels to get desired shape with radius self.r
+        D = np.linalg.norm(np.ogrid[-mid:mid, -mid:mid])/self.r
+        if gradient:
+            D = D/2
+            exponential = lambda x, l: l*np.exp(-l*x)
+            k = (D<1)* exponential(D, self.gradient)
+        else:
+            k = (D<1)
+        return convolve2d(o, k, mode="same", boundary="wrap")
+
+
+
+
+
+
+
+
 
