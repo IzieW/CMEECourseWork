@@ -15,7 +15,7 @@ from scipy.signal import convolve2d
 # Silence warnings
 np.warnings.filterwarnings("ignore", category=np.VisibleDeprecationWarning)  # Silence
 
-# CLASSES #
+############ INITIATE CLASSES  ####################
 class Creature:
     """Defines a life form, their kernel and growth functions
     R: radius
@@ -294,7 +294,7 @@ class ObstacleChannel:
         """Show obstacle configuration"""
         plt.matshow(self.initiate())
 
-### Measures ###
+############## INITIATE MEASURES ####################
 time_log = pd.DataFrame(columns=["wild_mean", "wild_var", "mutant_mean", "mutant_var"])
 def record_time(wild_mean, wild_var, mutant_mean, mutant_var):
     """Record timeline"""
@@ -353,7 +353,7 @@ def run_one(creature, obstacle, show_after=0, moving=False):
             plt.matshow(sum([creature.A, obstacle.grid]))
     return t
 
-def mutate_and_select(creature, obstacle, moving=False):
+def mutate_and_select(creature, obstacle, moving=False, runs=10):
     """Mutate one parameter from creature and assess fitness of new solution agaisnt wild type
     in input obstacle environment. Save winning parameters to Creature.
 
@@ -368,10 +368,10 @@ def mutate_and_select(creature, obstacle, moving=False):
     mutant.__dict__[Creature.keys[x]] = mutate(mutant.__dict__[Creature.keys[x]])
     mutant.K = mutant.kernel()  # update mutant kernel
 
-    # Run mutant and wild over 10 obstacle configurations
+    # Run mutant and wild over runs number of obstacle configurations
     t_wild = np.zeros(10)
     t_mutant = np.zeros(10)
-    for i in range(10):
+    for i in range(runs):
         O = obstacle.initiate()  # configure environment at random
         obstacle.grid = deepcopy(O)  # set configuration
         t_wild[i] = run_one(wild_type, obstacle, moving=moving)
@@ -412,6 +412,7 @@ def optimise(creature, obstacle, N, seed=0, fixation = 10, moving=False, gradien
         else:
             fix += 1
 
+    print("Saving configuration...")
     """Save winning parameters and timelogs"""
     if moving:
         enviro = "moving"
@@ -425,6 +426,7 @@ def optimise(creature, obstacle, N, seed=0, fixation = 10, moving=False, gradien
     creature.name = creature.name+"_f"+str(fixation)+"_s"+str(seed)+"_enviro_"+enviro
 
     """Update survival time mean and variance by running over 10 configurations with seed"""
+    print("Calculating survival means...")
     survival_time = get_survival_time(creature, obstacle)
     creature.survival_mean = survival_time[0]
     creature.survival_var = survival_time[1]
@@ -434,20 +436,14 @@ def optimise(creature, obstacle, N, seed=0, fixation = 10, moving=False, gradien
     creature.save()  # save parameters
 
 
-def get_survival_time(creature, obstacle):
+def get_survival_time(creature, obstacle, runs=10):
     """Calculate average run time over seeded 10 configurations.
     Return mean and variance."""
-    times = np.zeros(10)
-    for i in range(1, 10):
+    times = np.zeros(runs)
+    for i in range(1, runs):
         creature.A = creature.initiate()  # Reset grid
         obstacle.grid = obstacle.initiate(seed=i)
         times[i-1] = run_one(creature, obstacle)
 
     return times.mean(), times.var()
-
-
-orbium = Creature("orbium")
-O = ObstacleChannel()
-optimise(orbium, O, N=100)
-
 
