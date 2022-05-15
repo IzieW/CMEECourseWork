@@ -56,7 +56,7 @@ class Creature:
         if filename:
             dict = {}
             # Load parameters #
-            with open("parameters/"+filename.lower()+"_parameters.csv", "r") as f:
+            with open("../parameters/"+filename.lower()+"_parameters.csv", "r") as f:
                 csvread = csv.reader(f)
                 for row in csvread:
                     if row[0] == "b":  # Where b is list of values
@@ -73,6 +73,10 @@ class Creature:
         self.m = dict["m"]
         self.s = dict["s"]
         self.b = dict["b"]
+
+        self.evolved_in = 0
+        self.survival_mean = 0  # Mean survival time in evolved environment
+        self.survival_var = 0  # Survival var in evolved environment
 
         self.A = self.initiate()
         self.K = self.kernel()
@@ -123,18 +127,16 @@ class Creature:
         ax[2].title.set_text("Growth G")
         return fig
 
-    def save(self, verbose=False):
+    def save(self, verbose=True):
         """Save creature configuration to csv"""
-        with open("parameters/" + self.name.lower() + "_parameters.csv", "w") as f:
+        with open("../parameters/" + self.name.lower() + "_parameters.csv", "w") as f:
             csvwrite = csv.writer(f)
-            for i in range(len(Creature.keys)):
-                csvwrite.writerow([Creature.keys[i], self.theta[i]])
-        with open("parameters/"+self.name.lower()+"_cells.csv", "w") as f:
-            csvwrite = csv.writer(f)
-            for i in self.cells:
-                csvwrite.writerow(i)
+            for i in Creature.keys:
+                csvwrite.writerow([i, self.__dict__[i]])
+            csvwrite.writerow(["survival_mean", self.survival_mean])
+            csvwrite.writerow(["survival_var", self.survival_var])
         if verbose:
-        print(self.name+" configuration saved to parameters/")
+            print(self.name+" configuration saved to parameters/")
 
     def initiate(self, size=size, cx=cx, cy=cy, show=False):
         """Initiate learning channel with creature cell configurations"""
@@ -219,6 +221,21 @@ class Creature:
             anim.save("results/"+self.name+"_anim.gif", writer="imagemagick")
             print("Process complete.")
 
+    def update_theta(self, muse):
+        """Update parameters from parameters of input instance, muse.
+        Update kernel"""
+        self.R = muse.R
+        self.T = muse.T
+        self.s = muse.s
+        self.m = muse.m
+        self.b = muse.b
+        self.K = muse.K
+
+    def theta(self):
+        return [self.R, self.T, self.s, self.m, self.b]
+
+    def show(self):
+        plt.matshow(self.A)
 
 class ObstacleChannel:
     def __init__(self, n = 3, r= 5, seed=0, dir="up", gradient = 1):
@@ -227,18 +244,18 @@ class ObstacleChannel:
         r = obstacle radius
         (if moving): dir = direction of movement [up, down, left, right]
         """
-        self.name = "enviro_"+str(n)+"_obstacle_radius_"+str(r)+"_seed_"+str(seed)
+        self.name = "enviro_"+str(n)+"_obstacle_radius_"+str(r)
         self.n = n
         self.r = r
         self.seed = seed
         self.gradient = gradient
+        self.grid = 0
 
-        k = np.zeros([3,3])
+        self.direction = dir
         directions = {"up": (0,1), "down":(2, 1), "left":(1, 0), "right":(1, 2)}
-
-        if dir:
-            k[directions[dir]] = 1
-            self.kernel = k
+        k = np.zeros([3,3])
+        k[directions[self.direction]] = 1
+        self.kernel = k
 
 
     def initiate(self, gradient=False, seed = False, size= Creature.size, mid = Creature.mid):
@@ -260,11 +277,177 @@ class ObstacleChannel:
             k = (D<1)
         return convolve2d(o, k, mode="same", boundary="wrap")
 
+    def growth(self):
+        return -10 * np.maximum(0, (self.grid - 0.001))
+
+    def move(self):
+        self.grid = convolve2d(self.grid, self.kernel, mode="same", boundary="wrap")
+
+    def change_dir(self, direction):
+        self.direction = direction
+        directions = {"up": (0,1), "down":(2, 1), "left":(1, 0), "right":(1, 2)}
+        k = np.zeros([3,3])
+        k[directions[self.direction]] = 1
+        self.kernel = k
+
+    def show(self):
+        """Show obstacle configuration"""
+        plt.matshow(self.initiate())
+
+### Measures ###
+time_log = pd.DataFrame(columns=["wild_mean", "wild_var", "mutant_mean", "mutant_var"])
+def record_time(wild_mean, wild_var, mutant_mean, mutant_var):
+    """Record timeline"""
+    global time_log
+    x = pd.DataFrame([[wild_mean, wild_var, mutant_mean, mutant_var]], columns=["wild_mean", "wild_var", "mutant_mean", "mutant_var"]) # record averages
+    time_log = pd.concat([time_log, x])
+
+### EVOLUTION ###
+def mutate(p):
+    """Mutate input parameter p"""
+    return np.exp(np.log(p) + np.random.uniform(low=-0.2, high=0.2))
+
+def prob_fixation(wild_time, mutant_time, N):
+    """Return probability of fixation given time survived by mutant and wild type,
+    and psuedo-population size N"""
+    s = (mutant_time-wild_time)/wild_time  # selection coefficient
+
+    """If s is zero, there is no selective difference between types and probability of 
+    fixation is equal to 1/populdation size"""
+    if s:
+        return (1-np.exp(-2*s))/(1-np.exp(-2*N*s))
+    else:
+        return 1/N
+
+def update_man(creature, obstacle, moving=False):
+    """Update learning channel by 1/T according to values in learning channel A,
+    and obstacle channel O"""
+    U = np.real(np.fft.ifft2(creature.K*np.fft.fft2(creature.A)))
+    creature.A = np.clip(creature.A + 1/creature.T * (creature.growth(U) + obstacle.growth()), 0, 1)
+    if moving:
+        obstacle.move()
 
 
+def selection(t_wild, t_mutant):
+    """Return winning solution based on survival times of wild type (t_wild) and
+    mutant type (t_mutant)."""
+    pfix = prob_fixation(wild_time = t_wild, mutant_time = t_mutant, N = population_size)  # get probability of fixation
+    if pfix >= np.random.uniform(0,1):
+        # ACCEPT MUTATION
+        return True
+    else:
+        # REJECT MUTATION
+        return False
 
 
+def run_one(creature, obstacle, show_after=0, moving=False):
+    """Run creature of given parameters in given obstacle configuration until it dies.
+    Show after specifies number of timesteps at when it will show what the grid looks like"""
+    t = 0  # set timer
+    while (np.sum(creature.A) > 0) and (t < 10000):  # While there are still cells in the learning channel, and timer is below cut off
+        t += 1  # update timer by 1
+        if t%1000 == 0:
+            print(t)  # Show that it is working even after long waits
+        update_man(creature, obstacle, moving=moving)  # Run update and show
+        if t == show_after:
+            plt.matshow(sum([creature.A, obstacle.grid]))
+    return t
+
+def mutate_and_select(creature, obstacle, moving=False):
+    """Mutate one parameter from creature and assess fitness of new solution agaisnt wild type
+    in input obstacle environment. Save winning parameters to Creature.
+
+    Method involve running wild type and mutant over ten distinct obstacle environment, and
+    summing the survival time of each."""
+    creature.A = creature.initiate()  # Set/Reset Learning channel grid
+    wild_type = creature
+    mutant = deepcopy(creature)
+
+    ## Choose parameter at random and mutate in mutant_type
+    x = np.random.randint(0, 5)
+    mutant.__dict__[Creature.keys[x]] = mutate(mutant.__dict__[Creature.keys[x]])
+    mutant.K = mutant.kernel()  # update mutant kernel
+
+    # Run mutant and wild over 10 obstacle configurations
+    t_wild = np.zeros(10)
+    t_mutant = np.zeros(10)
+    for i in range(10):
+        O = obstacle.initiate()  # configure environment at random
+        obstacle.grid = deepcopy(O)  # set configuration
+        t_wild[i] = run_one(wild_type, obstacle, moving=moving)
+        if moving:
+            obstacle.grid = O  # Reset obstacle enviro if obstacles were moved
+        t_mutant[i] = run_one(mutant, obstacle, moving=moving)
+
+    # Record mean and variance of survival times
+    wild_mean = t_wild.mean()
+    mutant_mean = t_mutant.mean()
+    record_time(wild_mean = wild_mean,
+                wild_var = t_wild.var(),
+                mutant_mean = mutant_mean,
+                mutant_var = t_mutant.var())
+
+    # Select winning parameter
+    if selection(wild_mean, mutant_mean):
+        print("Accept mutation")
+        creature.update_theta(mutant)  # Update creature parameters
+        return True
+    else:
+        print("Reject mutation")
+        return False
+
+def optimise(creature, obstacle, N, seed=0, fixation = 10, moving=False, gradient=False):
+    """Mutate and select input creature in psuedo-population of size N
+    until wild type becomes fixed over fixation number of generations"""
+    global population_size
+    population_size = N
+
+    np.random.seed(seed)  # set seed
+
+    """Evolve until parameters become fixed over fixation number of generations"""
+    fix = 0  # Initiate fixation count
+    while fix < fixation:
+        if mutate_and_select(creature, obstacle, moving=moving):  # Updates creature values
+            fix = 0  # Mutation has been accepted, reset count
+        else:
+            fix += 1
+
+    """Save winning parameters and timelogs"""
+    if moving:
+        enviro = "moving"
+    else:
+        enviro = "static"
+    if gradient:
+        enviro = enviro+"_gradient"
+    else:
+        enviro = enviro+"_solid"
+
+    creature.name = creature.name+"_f"+str(fixation)+"_s"+str(seed)+"_enviro_"+enviro
+
+    """Update survival time mean and variance by running over 10 configurations with seed"""
+    survival_time = get_survival_time(creature, obstacle)
+    creature.survival_mean = survival_time[0]
+    creature.survival_var = survival_time[1]
+    creature.evolved_in = obstacle.__dict__
+
+    time_log.to_csv("../results/"+creature.name+"_times.csv")  # Save timelog to csv
+    creature.save()  # save parameters
 
 
+def get_survival_time(creature, obstacle):
+    """Calculate average run time over seeded 10 configurations.
+    Return mean and variance."""
+    times = np.zeros(10)
+    for i in range(1, 10):
+        creature.A = creature.initiate()  # Reset grid
+        obstacle.grid = obstacle.initiate(seed=i)
+        times[i-1] = run_one(creature, obstacle)
+
+    return times.mean(), times.var()
+
+
+orbium = Creature("orbium")
+O = ObstacleChannel()
+optimise(orbium, O, N=100)
 
 
