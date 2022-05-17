@@ -198,8 +198,7 @@ class Creature:
         """Update learning channel by 1/T according to values in the learning channel and obstacle channel"""
         global img
         U = np.real(np.fft.ifft2(self.K * np.fft.fft2(self.A)))  # Convolve by kernel to get neighbourhood sums
-        self.A = np.clip(self.A + 1 / self.T * (self.growth(U) + self.obstacle_growth()), 0,
-                         1)  # Update A by growth function *1/T
+        self.A = np.clip(self.A + 1 / self.T * (self.growth(U) + self.obstacle_growth()), 0, 1)  # Update A by growth function *1/T
         img.set_array(sum([self.A, self.enviro]))
         return img,
 
@@ -297,7 +296,14 @@ class ObstacleChannel:
         k = np.zeros([3, 3])
         k[directions[self.direction]] = 1
         self.dir_kernel = k
-        self.kernel = 0
+
+        mid = Creature.mid
+        D = np.linalg.norm(np.ogrid[-mid:mid, -mid:mid]) / self.r
+        if gradient:
+            exponential = lambda x, l: l * np.exp(-l * x)
+            self.kernel = ((D < 1) * exponential(D, self.gradient))/self.gradient # normalise to keep between 0 and 1
+        else:
+            self.kernel = np.ones([self.r, self.r])
 
     def figure_asset(self):
         x = np.linspace(0, np.sum(self.kernel), 1000)
@@ -312,7 +318,7 @@ class ObstacleChannel:
         ax[2].title.set_text("Obstacle growth")
         plt.show()
 
-    def initiate(self, gradient=False, seed=0, size=Creature.size, mid=Creature.mid):
+    def initiate(self, seed=0, size=Creature.size, mid=Creature.mid):
         """Initiate obstacle channel at random.
         Done by initiating half of grid with random obstacle configurations and
         stiching two halves together to allow more even spacing"""
@@ -321,15 +327,8 @@ class ObstacleChannel:
         o = np.zeros(size * size)
         o[np.random.randint(0, len(o), self.n)] = 1
         o.shape = [size, size]
-        # Convolve by one of two kernels to get desired shape with radius self.r
-        D = np.linalg.norm(np.ogrid[-mid:mid, -mid:mid]) / self.r
-        if gradient:
-            D = D / 2
-            exponential = lambda x, l: l * np.exp(-l * x)
-            self.kernel = (D < 1) * exponential(D, self.gradient)
-        else:
-            self.kernel = np.ones([self.r, self.r])
-        return convolve2d(o, self.kernel, mode="same", boundary="wrap")
+        # Convolve by kernel shape
+        self.grid = convolve2d(o, self.kernel, mode="same", boundary="wrap")
 
     def initiate_equal(self, seed=0):
         if seed:
@@ -350,14 +349,14 @@ class ObstacleChannel:
         return -10 * np.maximum(0, (self.grid - 0.001))
 
     def move(self):
-        self.grid = convolve2d(self.grid, self.kernel, mode="same", boundary="wrap")
+        self.grid = convolve2d(self.grid, self.dir_kernel, mode="same", boundary="wrap")
 
     def change_dir(self, direction):
         self.direction = direction
         directions = {"up": (0, 1), "down": (2, 1), "left": (1, 0), "right": (1, 2)}
         k = np.zeros([3, 3])
         k[directions[self.direction]] = 1
-        self.kernel = k
+        self.dir_kernel = k
 
     def show(self):
         """Show obstacle configuration"""
@@ -516,13 +515,16 @@ def optimise(creature, obstacle, N, seed=0, fixation=10, moving=False, gradient=
     creature.save()  # save parameters
 
 
-def get_survival_time(creature, obstacle, runs=10, verbose=False):
+def get_survival_time(creature, obstacle, runs=10, summary=False, verbose=False):
     """Calculate average run time over seeded 10 configurations.
     Return mean and variance."""
     times = np.zeros(runs)
     for i in range(1, runs):
         creature.A = creature.initiate()  # Reset grid
-        obstacle.grid = obstacle.initiate(seed=i)
+        obstacle.initiate(seed=i)
         times[i - 1] = run_one(creature, obstacle, verbose=verbose)
 
-    return times  # times.mean(), times.var()
+    if summary:
+        return times.mean(), times.var()
+    else:
+        return times
