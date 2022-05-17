@@ -477,15 +477,39 @@ def optimise(creature, obstacle, N, seed=0, fixation=10, moving=False, gradient=
     time_log.to_csv("../results/" + creature.name + "_times.csv")  # Save timelog to csv
     creature.save()  # save parameters
 
-
 def get_survival_time(creature, obstacle, runs=10, verbose=False):
     """Calculate average run time over seeded 10 configurations.
     Return mean and variance."""
     times = np.zeros(runs)
+    mean = np.zeros(runs)
+    variance = np.zeros(runs)
     for i in range(1, runs):
         creature.A = creature.initiate()  # Reset grid
         obstacle.grid = obstacle.initiate(seed=i)
         times[i - 1] = run_one(creature, obstacle, verbose=verbose)
+        mean[i] = times[0:i].mean()
+        variance[i] = times[0:i].var()
 
-    return times #times.mean(), times.var()
+    return times, mean, variance
+
+# Initiate channels
+orbium = Creature("orbium")
+obstacle = ObstacleChannel(n=8, r=5)  # initiate obstacles
+
+t1 = get_survival_time(orbium, obstacle, runs=1000)
+times = t1[0]
+means = t1[1]
+variance = t1[2]
+sd = np.sqrt(variance)
+
+
+obstacle = ObstacleChannel(n=8, r=10)  # bigger obstacles
+t2 = get_survival_time(orbium, obstacle, runs=1000)
+times = t2[0]
+means = t2[1]
+variance = t2[2]
+sd = np.sqrt(variance)
+
+obstacle = ObstacleChannel(n=16, r=5)  # more obstacles
+t3 = get_survival_time(orbium, obstacle, runs=1000)
 

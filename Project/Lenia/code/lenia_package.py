@@ -12,6 +12,8 @@ import csv
 from copy import deepcopy
 from matplotlib import animation
 from scipy.signal import convolve2d
+from IPython.display import HTML, Image
+import IPython
 
 # Silence warnings
 np.warnings.filterwarnings("ignore", category=np.VisibleDeprecationWarning)  # Silence
@@ -72,7 +74,7 @@ class Creature:
         if filename:
             dict = {}
             # Load parameters #
-            with open("../parameters/" + filename.lower() + "_parameters.csv", "r") as f:
+            with open("parameters/" + filename.lower() + "_parameters.csv", "r") as f:
                 csvread = csv.reader(f)
                 for row in csvread:
                     if row[0] == "b":  # Where b is list of values
@@ -91,8 +93,8 @@ class Creature:
         self.b = dict["b"]
 
         self.evolved_in = 0
-        self.survival_mean = 0  # Mean survival time in evolved environment
-        self.survival_var = 0  # Survival var in evolved environment
+        self.survival_mean = 0  # dict["survival_mean"] # Mean survival time in evolved environment
+        self.survival_var = 0  # dict["survival_var"]  # Survival var in evolved environment
 
         self.A = self.initiate()
         self.K = self.kernel()
@@ -196,7 +198,8 @@ class Creature:
         """Update learning channel by 1/T according to values in the learning channel and obstacle channel"""
         global img
         U = np.real(np.fft.ifft2(self.K * np.fft.fft2(self.A)))  # Convolve by kernel to get neighbourhood sums
-        self.A = np.clip(self.A + 1 / self.T * (self.growth(U) + self.obstacle_growth()), 0, 1)  # Update A by growth function *1/T
+        self.A = np.clip(self.A + 1 / self.T * (self.growth(U) + self.obstacle_growth()), 0,
+                         1)  # Update A by growth function *1/T
         img.set_array(sum([self.A, self.enviro]))
         return img,
 
@@ -210,7 +213,7 @@ class Creature:
         img.set_array(sum([self.A, self.enviro]))
         return img,
 
-    def render(self, O=0, direction=0):
+    def render(self, O=0, direction=0, html=False):
         """Render Lenia simulation using above update functions.
         O = obstacle configuration. If specified, renders simulation with this obstacle environment.
         moving = obstacle kernel with desired direction. If specified, renders simulations with moving obstacle environment"""
@@ -221,20 +224,42 @@ class Creature:
             if type(direction) != int:
                 self.enviro_kernel = direction
                 print("Rendering animation...")
-                anim = animation.FuncAnimation(fig, self.update_obstacle_moving, frames=200, interval=20)
-                anim.save("../results/" + self.name + "_anim.gif", writer="imagemagick")
+                if html:
+                    IPython.display.HTML(
+                        animation.FuncAnimation(fig, self.update_obstacle_moving, frames=200, interval=20).to_jshtml())
+                else:
+                    anim = animation.FuncAnimation(fig, self.update_obstacle_moving, frames=200, interval=20)
+                    anim.save("../results/" + self.name + "_anim.gif", writer="imagemagick")
                 print("Process complete.")
             else:
                 print("Rendering animation...")
-                anim = animation.FuncAnimation(fig, self.update_obstacle, frames=200, interval=20)
-                anim.save("../results/" + self.name + "_anim.gif", writer="imagemagick")
-                print("Process complete.")
+                if html:
+                    IPython.display.HTML(
+                        animation.FuncAnimation(fig, self.update_obstacle, frames=200, interval=20).to_jshtml())
+                else:
+                    anim = animation.FuncAnimation(fig, self.update_obstacle, frames=200, interval=20)
+                    anim.save("../results/" + self.name + "_anim.gif", writer="imagemagick")
+                # print("Process complete.")
         else:
             fig = Creature.figure_world(self.A)
             print("Rendering animation...")
-            anim = animation.FuncAnimation(fig, self.update_naive, frames=200, interval=20)
-            anim.save("../results/" + self.name + "_anim.gif", writer="imagemagick")
-            print("Process complete.")
+            if html:
+                IPython.display.HTML(
+                    animation.FuncAnimation(fig, self.update_naive, frames=200, interval=20).to_jshtml())
+            else:
+                anim = animation.FuncAnimation(fig, self.update_naive, frames=200, interval=20)
+                anim.save("../results/" + self.name + "_anim.gif", writer="imagemagick")
+        # print("Process complete.")
+
+    def render_html(self, o=0):
+        if type(o) != int:
+            self.enviro = o
+            fig = Creature.figure_world(sum([self.A, self.enviro]))
+            IPython.display.HTML(
+                animation.FuncAnimation(fig, self.update_obstacle, frames=200, interval=20).to_jshtml())
+        else:
+            fig = Creature.figure_World(self.A)
+            IPython.display.HTML(animation.FuncAnimation(fig, self.update_naive, frames=200, interval=20).to_jshtml())
 
     def update_theta(self, muse):
         """Update parameters from parameters of input instance, muse.
@@ -271,7 +296,21 @@ class ObstacleChannel:
         directions = {"up": (0, 1), "down": (2, 1), "left": (1, 0), "right": (1, 2)}
         k = np.zeros([3, 3])
         k[directions[self.direction]] = 1
-        self.kernel = k
+        self.dir_kernel = k
+        self.kernel = 0
+
+    def figure_asset(self):
+        x = np.linspace(0, np.sum(self.kernel), 1000)
+        mid = self.kernel.shape[0] // 2
+        self.grid = x
+        fig, ax = plt.subplots(1, 3)
+        ax[0].imshow(self.kernel)
+        ax[0].title.set_text("Obstacle kernel")
+        ax[1].plot(self.kernel[mid, :])
+        ax[1].title.set_text("Kernel cross-section")
+        ax[2].plot(x, self.growth())
+        ax[2].title.set_text("Obstacle growth")
+        plt.show()
 
     def initiate(self, gradient=False, seed=0, size=Creature.size, mid=Creature.mid):
         """Initiate obstacle channel at random.
@@ -287,10 +326,10 @@ class ObstacleChannel:
         if gradient:
             D = D / 2
             exponential = lambda x, l: l * np.exp(-l * x)
-            k = (D < 1) * exponential(D, self.gradient)
+            self.kernel = (D < 1) * exponential(D, self.gradient)
         else:
-            k = np.ones([self.r,self.r])
-        return convolve2d(o, k, mode="same", boundary="wrap")
+            self.kernel = np.ones([self.r, self.r])
+        return convolve2d(o, self.kernel, mode="same", boundary="wrap")
 
     def initiate_equal(self, seed=0):
         if seed:
@@ -486,5 +525,4 @@ def get_survival_time(creature, obstacle, runs=10, verbose=False):
         obstacle.grid = obstacle.initiate(seed=i)
         times[i - 1] = run_one(creature, obstacle, verbose=verbose)
 
-    return times #times.mean(), times.var()
-
+    return times  # times.mean(), times.var()
