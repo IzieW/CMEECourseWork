@@ -74,7 +74,7 @@ class Creature:
         if filename:
             dict = {}
             # Load parameters #
-            with open("parameters/" + filename.lower() + "_parameters.csv", "r") as f:
+            with open("../parameters/" + filename.lower() + "_parameters.csv", "r") as f:
                 csvread = csv.reader(f)
                 for row in csvread:
                     if row[0] == "b":  # Where b is list of values
@@ -96,10 +96,12 @@ class Creature:
         self.survival_mean = 0  # dict["survival_mean"] # Mean survival time in evolved environment
         self.survival_var = 0  # dict["survival_var"]  # Survival var in evolved environment
 
-        self.A = self.initiate()
+        self.A = 0
         self.K = self.kernel()
         self.enviro = 0  # Load and temporarily hold obstacle channels
         self.enviro_kernel = 0  # Load and temporarily hold obstacle kernels
+
+        self.initiate()  # load A
 
     def figure_world(A, cmap="viridis"):
         """Set up basic graphics of unpopulated, unsized world"""
@@ -162,7 +164,7 @@ class Creature:
         A[cx:cx + C.shape[0], cy:cy + C.shape[1]] = C  # load cell configuration onto grid
         if show:
             plt.matshow(A)
-        return A
+        self.A = A
 
     def kernel(self, mid=mid, fourier=True, show=False):
         """ Learning kernel for parameter solution. Default fourier transformed"""
@@ -216,7 +218,7 @@ class Creature:
         """Render Lenia simulation using above update functions.
         O = obstacle configuration. If specified, renders simulation with this obstacle environment.
         moving = obstacle kernel with desired direction. If specified, renders simulations with moving obstacle environment"""
-        self.A = self.initiate()
+        self.initiate()
         if type(O) != int:  # Weird logic condition to avoid using "if O.any" since will need to check multiple values in O
             self.enviro = O
             fig = Creature.figure_world(sum([self.A, self.enviro]))
@@ -299,11 +301,14 @@ class ObstacleChannel:
 
         mid = Creature.mid
         D = np.linalg.norm(np.ogrid[-mid:mid, -mid:mid]) / self.r
+
         if gradient:
             exponential = lambda x, l: l * np.exp(-l * x)
             self.kernel = ((D < 1) * exponential(D, self.gradient))/self.gradient # normalise to keep between 0 and 1
         else:
             self.kernel = np.ones([self.r, self.r])
+
+        self.initiate()  # Load grid of obstacles
 
     def figure_asset(self):
         x = np.linspace(0, np.sum(self.kernel), 1000)
@@ -360,7 +365,7 @@ class ObstacleChannel:
 
     def show(self):
         """Show obstacle configuration"""
-        plt.matshow(self.initiate())
+        plt.matshow(self.grid)
 
 
 ############## INITIATE MEASURES ####################
@@ -448,10 +453,10 @@ def mutate_and_select(creature, obstacle, moving=False, runs=100):
     t_wild = np.zeros(runs)
     t_mutant = np.zeros(runs)
     for i in range(runs):
-        O = obstacle.initiate()  # configure environment at random
+        obstacle.initiate()  # configure environment at random
+        O = deepcopy(obstacle.grid)
         wild_type.A = wild_type.initiate()
         mutant.A = mutant.initiate()
-        obstacle.grid = deepcopy(O)  # set configuration
         t_wild[i] = run_one(wild_type, obstacle, moving=moving)
         if moving:
             obstacle.grid = O  # Reset obstacle enviro if obstacles were moved
@@ -520,8 +525,8 @@ def get_survival_time(creature, obstacle, runs=10, summary=False, verbose=False)
     Return mean and variance."""
     times = np.zeros(runs)
     for i in range(1, runs):
-        creature.A = creature.initiate()  # Reset grid
-        obstacle.initiate(seed=i)
+        creature.initiate()  # Reset grid
+        obstacle.initiate(seed=i)  # set obstacle
         times[i - 1] = run_one(creature, obstacle, verbose=verbose)
 
     if summary:

@@ -1,3 +1,16 @@
 # !/usr/bin/env python3
 
-"""Evolve orbium in """
+"""Evolve Orbium in environment with gradient of negative values"""
+
+## IMPORTS ###
+from lenia_package import *  # Load all lenia functions
+
+orbium = Creature("orbium")  # Load orbium
+
+"""1. Configuration 1: 
+Single obstacle diffused across entire grid board"""
+obstacle = ObstacleChannel(n=1, r=64, gradient=10)
+
+obstacle.figure_asset()
+obstacle.initiate()
+
