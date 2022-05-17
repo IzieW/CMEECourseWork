@@ -9,8 +9,6 @@ orbium = Creature("orbium")  # Load orbium
 
 """1. Configuration 1: 
 Single obstacle diffused across entire grid board"""
-obstacle = ObstacleChannel(n=1, r=64, gradient=10)
+obstacle = ObstacleChannel(n=1, r=60, gradient=10)
 
-obstacle.figure_asset()
-obstacle.initiate()
-
+optimise(orbium, obstacle, N=100, fixation=10)  # Optimise in population of 100

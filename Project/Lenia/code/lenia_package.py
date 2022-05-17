@@ -424,7 +424,7 @@ def run_one(creature, obstacle, show_after=0, moving=False, verbose=True):
     """Run creature of given parameters in given obstacle configuration until it dies.
     Show after specifies number of timesteps at when it will show what the grid looks like"""
     t = 0  # set timer
-    while (np.sum(creature.A) > 0) and (
+    while np.sum(creature.A) and (
             t < 10000):  # While there are still cells in the learning channel, and timer is below cut off
         t += 1  # update timer by 1
         if verbose & (t % 1000 == 0):
@@ -455,8 +455,8 @@ def mutate_and_select(creature, obstacle, moving=False, runs=100):
     for i in range(runs):
         obstacle.initiate()  # configure environment at random
         O = deepcopy(obstacle.grid)
-        wild_type.A = wild_type.initiate()
-        mutant.A = mutant.initiate()
+        wild_type.initiate()
+        mutant.initiate()
         t_wild[i] = run_one(wild_type, obstacle, moving=moving)
         if moving:
             obstacle.grid = O  # Reset obstacle enviro if obstacles were moved
@@ -464,6 +464,7 @@ def mutate_and_select(creature, obstacle, moving=False, runs=100):
 
     # Record mean and variance of survival times
     wild_mean = t_wild.mean()
+    print(wild_mean)
     mutant_mean = t_mutant.mean()
     record_time(wild_mean=wild_mean,
                 wild_var=t_wild.var(),
