@@ -4,11 +4,14 @@
 
 ## IMPORTS ###
 from lenia_package import *  # Load all lenia functions
-
+import time
 orbium = Creature("orbium")  # Load orbium
 
 """1. Configuration 1: 
 Single obstacle diffused across entire grid board"""
 obstacle = ObstacleChannel(n=1, r=60, gradient=10)
 
-optimise(orbium, obstacle, N=100, fixation=10)  # Optimise in population of 100
+start = time.time()
+optimise(orbium, obstacle, N=100, fixation=15)  # Optimise in population of 100
+end = time.time()
+total_time = end-start

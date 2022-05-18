@@ -83,7 +83,7 @@ class Creature:
                         dict[row[0]] = float(row[1])
             self.name = filename
         else:
-            self.name = dict["name"]
+            self.name = dict["orbium"]
         self.cells = Creature.species_cells[species]  # Cells only
         # Each parameter
         self.R = dict["R"]
@@ -280,7 +280,7 @@ class Creature:
 
 
 class ObstacleChannel:
-    def __init__(self, n=3, r=5, seed=0, dir="up", gradient=1):
+    def __init__(self, n=3, r=5, seed=0, dir="up", gradient=0):
         """Defines obstacle environment.
         n = number of obstacles per QUARTER of grid
         r = obstacle radius
@@ -399,13 +399,15 @@ def prob_fixation(wild_time, mutant_time, N):
         return 1 / N
 
 
-def update_man(creature, obstacle, moving=False):
+def update_man(creature, obstacle, moving=False, give_sums=False):
     """Update learning channel by 1/T according to values in learning channel A,
     and obstacle channel O"""
     U = np.real(np.fft.ifft2(creature.K * np.fft.fft2(creature.A)))
     creature.A = np.clip(creature.A + 1 / creature.T * (creature.growth(U) + obstacle.growth()), 0, 1)
     if moving:
         obstacle.move()
+    if give_sums:
+        return np.sum(creature.A)
 
 
 def selection(t_wild, t_mutant):
@@ -420,16 +422,21 @@ def selection(t_wild, t_mutant):
         return False
 
 
-def run_one(creature, obstacle, show_after=0, moving=False, verbose=True):
+def run_one(creature, obstacle, show_after=0, moving=False, verbose=True, give_sums=False):
     """Run creature of given parameters in given obstacle configuration until it dies.
     Show after specifies number of timesteps at when it will show what the grid looks like"""
     t = 0  # set timer
+    global sums
+    sums = np.zeros(10000)
     while np.sum(creature.A) and (
             t < 10000):  # While there are still cells in the learning channel, and timer is below cut off
         t += 1  # update timer by 1
         if verbose & (t % 1000 == 0):
             print(t)  # Show that it is working even after long waits
-        update_man(creature, obstacle, moving=moving)  # Run update and show
+        if give_sums:
+            sums[t-1] = update_man(creature, obstacle, moving=moving, give_sums=True)
+        else:
+            update_man(creature, obstacle, moving=moving)  # Run update and show
         # if t == show_after:
         #   plt.matshow(sum([creature.A, obstacle.grid]))
     return t
@@ -486,7 +493,6 @@ def optimise(creature, obstacle, N, seed=0, fixation=10, moving=False, gradient=
     until wild type becomes fixed over fixation number of generations"""
     global population_size
     population_size = N
-
     np.random.seed(seed)  # set seed
 
     """Evolve until parameters become fixed over fixation number of generations"""
@@ -496,6 +502,7 @@ def optimise(creature, obstacle, N, seed=0, fixation=10, moving=False, gradient=
             fix = 0  # Mutation has been accepted, reset count
         else:
             fix += 1
+            print(fix)
 
     print("Saving configuration...")
     """Save winning parameters and timelogs"""
@@ -508,7 +515,7 @@ def optimise(creature, obstacle, N, seed=0, fixation=10, moving=False, gradient=
     else:
         enviro = enviro + "_solid"
 
-    creature.name = creature.name + "_f" + str(fixation) + "_s" + str(seed) + "_enviro_" + enviro
+    creature.name = "orbium" + "_f" + str(fixation) + "_s" + str(seed) + "N"+str(N) + "_enviro_" + enviro
 
     """Update survival time mean and variance by running over 10 configurations with seed"""
     print("Calculating survival means...")
@@ -519,7 +526,51 @@ def optimise(creature, obstacle, N, seed=0, fixation=10, moving=False, gradient=
 
     time_log.to_csv("../results/" + creature.name + "_times.csv")  # Save timelog to csv
     creature.save()  # save parameters
+    return 1
 
+
+import time
+def optimise_timely(creature, obstacle, N, seed=0, run_time=10, moving=False):
+    """Mutate and select input creature in psuedo-population of size N
+    until wild type becomes fixed over fixation number of generations"""
+    global population_size
+    population_size = N
+    np.random.seed(seed)  # set seed
+
+    run_time = run_time*60  # Translate to seconds
+    """Evolve until parameters become fixed over fixation number of generations"""
+    gen = 0  # time_count
+    mutation = 0
+    start = time.time()
+    while (time.time() - start) < run_time:
+        if mutate_and_select(creature, obstacle, moving=moving):  # Updates creature values
+            mutation += 1
+        gen += 1
+
+
+    print("Saving configuration...")
+    """Save winning parameters and timelogs"""
+    if moving:
+        enviro = "m"
+    else:
+        enviro = "s"
+    if obstacle.gradient:
+        enviro = enviro + "g"+str(obstacle.gradient)+"r"+str(obstacle.r)
+    else:
+        enviro = enviro + "s"
+
+    creature.name = "orbium_mutations"+str(mutation)+"t" + str(run_time) + "s" + str(seed) + "N"+str(N) + "_enviro_" + enviro
+
+    """Update survival time mean and variance by running over 10 configurations with seed"""
+    print("Calculating survival means...")
+    survival_time = get_survival_time(creature, obstacle)
+    creature.survival_mean = survival_time[0]
+    creature.survival_var = survival_time[1]
+    creature.evolved_in = obstacle.__dict__
+
+    time_log.to_csv("../results/" + creature.name + "_times.csv")  # Save timelog to csv
+    creature.save()  # save parameters
+    return 1
 
 def get_survival_time(creature, obstacle, runs=10, summary=False, verbose=False):
     """Calculate average run time over seeded 10 configurations.
