@@ -3,15 +3,27 @@
 """Evolve Orbium in environment with gradient of negative values"""
 
 ## IMPORTS ###
-from lenia_package import *  # Load all lenia functions
-import time
-orbium = Creature("orbium")  # Load orbium
+from lenia_package import *  # Load package
 
-"""1. Configuration 1: 
-Single obstacle diffused across entire grid board"""
-obstacle = ObstacleChannel(n=1, r=60, gradient=10)
+# Load creatures
 
-start = time.time()
-optimise(orbium, obstacle, N=100, fixation=15)  # Optimise in population of 100
-end = time.time()
-total_time = end-start
+# iter = float(Sys.getenv("PBS_ARRAY_INDEX"))
+
+global g, s
+g = 0.5  # set gradient count
+s = 0  # set seed
+
+def run_simulations(i):
+    global s, g
+    np.random.seed(s)
+
+    orbium = Creature("orbium")  # Initiate creature
+    obstacle = ObstacleChannel(n=1, r=60, gradient = g)
+
+    optimise_timely(orbium, obstacle, N=100, run_time = 70)
+
+    g += 1
+
+
+for i in range(10):
+    run_simulations(i)

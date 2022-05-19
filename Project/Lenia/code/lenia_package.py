@@ -92,6 +92,7 @@ class Creature:
         self.s = dict["s"]
         self.b = dict["b"]
 
+        self.mutations = 0
         self.evolved_in = 0
         self.survival_mean = 0  # dict["survival_mean"] # Mean survival time in evolved environment
         self.survival_var = 0  # dict["survival_var"]  # Survival var in evolved environment
@@ -152,6 +153,7 @@ class Creature:
             csvwrite = csv.writer(f)
             for i in Creature.keys:
                 csvwrite.writerow([i, self.__dict__[i]])
+            csvwrite.writerow(["mutations", self.mutations])
             csvwrite.writerow(["survival_mean", self.survival_mean])
             csvwrite.writerow(["survival_var", self.survival_var])
         if verbose:
@@ -559,11 +561,12 @@ def optimise_timely(creature, obstacle, N, seed=0, run_time=10, moving=False):
     else:
         enviro = enviro + "s"
 
-    creature.name = "orbium_mutations"+str(mutation)+"t" + str(run_time) + "s" + str(seed) + "N"+str(N) + "_enviro_" + enviro
+    creature.name = "orbium_t" + str(run_time) + "s" + str(seed) + "N"+str(N) + "_enviro_" + enviro
 
     """Update survival time mean and variance by running over 10 configurations with seed"""
     print("Calculating survival means...")
     survival_time = get_survival_time(creature, obstacle)
+    creature.mutations = mutation
     creature.survival_mean = survival_time[0]
     creature.survival_var = survival_time[1]
     creature.evolved_in = obstacle.__dict__
