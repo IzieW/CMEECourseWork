@@ -92,10 +92,16 @@ class Creature:
         self.s = dict["s"]
         self.b = dict["b"]
 
-        self.mutations = 0
-        self.evolved_in = 0
-        self.survival_mean = 0  # dict["survival_mean"] # Mean survival time in evolved environment
-        self.survival_var = 0  # dict["survival_var"]  # Survival var in evolved environment
+        if dict["mutation"]:
+            self.mutations = dict["mutation"]
+        else:
+            self.mutations = 0
+        if dict["gradient"]:
+            self.evolved_in = dict["gradient"]
+        else:
+            self.evolved_in = 0
+        self.survival_mean =  dict["survival_mean"] # Mean survival time in evolved environment
+        self.survival_var = dict["survival_var"]  # Survival var in evolved environment
 
         self.A = 0
         self.K = self.kernel()
