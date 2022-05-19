@@ -18,8 +18,7 @@ global g, s
 g = 0.5  # set gradient count
 s = 0  # set seed
 
-def run_simulations(i, run_time):
-    global s, g
+def run_simulations(g, run_time):
     np.random.seed(s)
 
     orbium = Creature("orbium")  # Initiate creature
@@ -27,7 +26,6 @@ def run_simulations(i, run_time):
 
     optimise_timely(orbium, obstacle, N=100, run_time = run_time)
 
-    g += 1
 
 # Running simulation commented out
 """for i in range(10):

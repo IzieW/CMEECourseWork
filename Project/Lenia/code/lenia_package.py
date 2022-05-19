@@ -92,15 +92,10 @@ class Creature:
         self.s = dict["s"]
         self.b = dict["b"]
 
-        if dict["mutation"]:
-            self.mutations = dict["mutation"]
-        else:
-            self.mutations = 0
-        if dict["gradient"]:
-            self.evolved_in = dict["gradient"]
-        else:
-            self.evolved_in = 0
-        self.survival_mean =  dict["survival_mean"] # Mean survival time in evolved environment
+        self.mutations = 0
+        self.evolved_in = 0
+
+        self.survival_mean = dict["survival_mean"]  # Mean survival time in evolved environment
         self.survival_var = dict["survival_var"]  # Survival var in evolved environment
 
         self.A = 0
@@ -160,6 +155,7 @@ class Creature:
             for i in Creature.keys:
                 csvwrite.writerow([i, self.__dict__[i]])
             csvwrite.writerow(["mutations", self.mutations])
+            csvwrite.writerow(["gradient"], self.evolved_in)
             csvwrite.writerow(["survival_mean", self.survival_mean])
             csvwrite.writerow(["survival_var", self.survival_var])
         if verbose:
@@ -208,7 +204,8 @@ class Creature:
         """Update learning channel by 1/T according to values in the learning channel and obstacle channel"""
         global img
         U = np.real(np.fft.ifft2(self.K * np.fft.fft2(self.A)))  # Convolve by kernel to get neighbourhood sums
-        self.A = np.clip(self.A + 1 / self.T * (self.growth(U) + self.obstacle_growth()), 0, 1)  # Update A by growth function *1/T
+        self.A = np.clip(self.A + 1 / self.T * (self.growth(U) + self.obstacle_growth()), 0,
+                         1)  # Update A by growth function *1/T
         img.set_array(sum([self.A, self.enviro]))
         return img,
 
@@ -312,7 +309,7 @@ class ObstacleChannel:
 
         if gradient:
             exponential = lambda x, l: l * np.exp(-l * x)
-            self.kernel = ((D < 1) * exponential(D, self.gradient))/self.gradient # normalise to keep between 0 and 1
+            self.kernel = ((D < 1) * exponential(D, self.gradient)) / self.gradient  # normalise to keep between 0 and 1
         else:
             self.kernel = np.ones([self.r, self.r])
 
@@ -442,7 +439,7 @@ def run_one(creature, obstacle, show_after=0, moving=False, verbose=True, give_s
         if verbose & (t % 1000 == 0):
             print(t)  # Show that it is working even after long waits
         if give_sums:
-            sums[t-1] = update_man(creature, obstacle, moving=moving, give_sums=True)
+            sums[t - 1] = update_man(creature, obstacle, moving=moving, give_sums=True)
         else:
             update_man(creature, obstacle, moving=moving)  # Run update and show
         # if t == show_after:
@@ -523,7 +520,7 @@ def optimise(creature, obstacle, N, seed=0, fixation=10, moving=False, gradient=
     else:
         enviro = enviro + "_solid"
 
-    creature.name = "orbium" + "_f" + str(fixation) + "_s" + str(seed) + "N"+str(N) + "_enviro_" + enviro
+    creature.name = "orbium" + "_f" + str(fixation) + "_s" + str(seed) + "N" + str(N) + "_enviro_" + enviro
 
     """Update survival time mean and variance by running over 10 configurations with seed"""
     print("Calculating survival means...")
@@ -538,6 +535,8 @@ def optimise(creature, obstacle, N, seed=0, fixation=10, moving=False, gradient=
 
 
 import time
+
+
 def optimise_timely(creature, obstacle, N, seed=0, run_time=10, moving=False):
     """Mutate and select input creature in psuedo-population of size N
     until wild type becomes fixed over fixation number of generations"""
@@ -545,7 +544,7 @@ def optimise_timely(creature, obstacle, N, seed=0, run_time=10, moving=False):
     population_size = N
     np.random.seed(seed)  # set seed
 
-    run_time = run_time*60  # Translate to seconds
+    run_time = run_time * 60  # Translate to seconds
     """Evolve until parameters become fixed over fixation number of generations"""
     gen = 0  # time_count
     mutation = 0
@@ -555,7 +554,6 @@ def optimise_timely(creature, obstacle, N, seed=0, run_time=10, moving=False):
             mutation += 1
         gen += 1
 
-
     print("Saving configuration...")
     """Save winning parameters and timelogs"""
     if moving:
@@ -563,11 +561,11 @@ def optimise_timely(creature, obstacle, N, seed=0, run_time=10, moving=False):
     else:
         enviro = "s"
     if obstacle.gradient:
-        enviro = enviro + "g"+str(obstacle.gradient)+"r"+str(obstacle.r)
+        enviro = enviro + "g" + str(obstacle.gradient) + "r" + str(obstacle.r)
     else:
         enviro = enviro + "s"
 
-    creature.name = "orbium_t" + str(run_time) + "s" + str(seed) + "N"+str(N) + "_enviro_" + enviro
+    creature.name = "orbium_t" + str(run_time) + "s" + str(seed) + "N" + str(N) + "_enviro_" + enviro
 
     """Update survival time mean and variance by running over 10 configurations with seed"""
     print("Calculating survival means...")
@@ -575,11 +573,12 @@ def optimise_timely(creature, obstacle, N, seed=0, run_time=10, moving=False):
     creature.mutations = mutation
     creature.survival_mean = survival_time[0]
     creature.survival_var = survival_time[1]
-    creature.evolved_in = obstacle.__dict__
+    creature.evolved_in = obstacle.gradient
 
     time_log.to_csv("../results/" + creature.name + "_times.csv")  # Save timelog to csv
     creature.save()  # save parameters
     return 1
+
 
 def get_survival_time(creature, obstacle, runs=10, summary=False, verbose=False):
     """Calculate average run time over seeded 10 configurations.
