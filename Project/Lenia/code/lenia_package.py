@@ -155,7 +155,7 @@ class Creature:
             for i in Creature.keys:
                 csvwrite.writerow([i, self.__dict__[i]])
             csvwrite.writerow(["mutations", self.mutations])
-            csvwrite.writerow(["gradient"], self.evolved_in)
+            csvwrite.writerow(["gradient", self.evolved_in])
             csvwrite.writerow(["survival_mean", self.survival_mean])
             csvwrite.writerow(["survival_var", self.survival_var])
         if verbose:
