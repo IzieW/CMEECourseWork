@@ -8,35 +8,8 @@ spans the entire grid (n=1, r=60). Orbium are evolved for 1.5 hours over
 ## IMPORTS ###
 from lenia_package import *  # Load package
 import re  # regex
-import os
 
-# Load creatures
-
-# iter = float(Sys.getenv("PBS_ARRAY_INDEX"))
-
-global g, s
-g = 0.5  # set gradient count
-s = 0  # set seed
-
-def run_simulations(g, run_time):
-    np.random.seed(s)
-
-    orbium = Creature("orbium")  # Initiate creature
-    obstacle = ObstacleChannel(n=1, r=60, gradient = g)
-
-    optimise_timely(orbium, obstacle, N=100, run_time = run_time)
-
-
-# Running simulation commented out
-"""for i in range(10):
-    run_simulations(i)"""
-
-
-## EVOLVE FURTHER
-run_simulations(3.5, run_time=12)
-run_simulations(6.5, run_time=6)
-
-"""RESULTS"""
+"""RESULTS: A  bunch of gymnastics to retrieve results from last gradient run"""
 def sort_data(i):
         """A load of gymnastics and rewriting/saving because I cocked up the
         filenames after 12 hours of simulations"""
@@ -73,6 +46,3 @@ def sort_times(i):
                 csvwrite.writerow(row)
 
 
-
-##### GRADIENT PLAY #####
-o =

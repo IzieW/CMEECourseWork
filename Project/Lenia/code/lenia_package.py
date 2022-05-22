@@ -293,7 +293,7 @@ class Creature:
 
 
 class ObstacleChannel:
-    def __init__(self, n=3, r=5, seed=0, dir="up", gradient=0):
+    def __init__(self, n=3, r=5, seed=0, dir="up", gradient=0, peak=1):
         """Defines obstacle environment.
         n = number of obstacles per QUARTER of grid
         r = obstacle radius
@@ -305,6 +305,7 @@ class ObstacleChannel:
         self.seed = seed
         self.gradient = gradient
         self.grid = 0
+        self.peak = peak  # max value in obstacle grid
 
         self.direction = dir
         directions = {"up": (0, 1), "down": (2, 1), "left": (1, 0), "right": (1, 2)}
@@ -346,7 +347,7 @@ class ObstacleChannel:
         o[np.random.randint(0, len(o), self.n)] = 1
         o.shape = [size, size]
         # Convolve by kernel shape
-        self.grid = convolve2d(o, self.kernel, mode="same", boundary="wrap")
+        self.grid = convolve2d(o, self.kernel, mode="same", boundary="wrap") * self.peak
 
     def initiate_equal(self, seed=0):
         if seed:
