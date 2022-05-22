@@ -69,12 +69,16 @@ class Creature:
                                  0],
                                 [0, 0, 0, 0, 0, 0, 0, 0, 0.02, 0.06, 0.08, 0.09, 0.07, 0.05, 0.01, 0, 0, 0, 0, 0]]}
 
-    def __init__(self, filename, dict=0, species="orbium"):
+    def __init__(self, filename, dict=0, species="orbium", cluster=False):
         """Initiate creature from parameters filename, or if file is false, load dictionary"""
         if filename:
             dict = {}
             # Load parameters #
-            with open("../parameters/" + filename.lower() + "_parameters.csv", "r") as f:
+            if cluster:
+                filename = filename.lower()+"_parameters.csv"
+            else:
+                filename = "../parameters/" + filename.lower() + "_parameters.csv"
+            with open(filename, "r") as f:
                 csvread = csv.reader(f)
                 for row in csvread:
                     if row[0] == "b":  # Where b is list of values
@@ -148,9 +152,13 @@ class Creature:
         ax[2].title.set_text("Growth G")
         return fig
 
-    def save(self, verbose=True):
+    def save(self, verbose=True, cluster=False):
         """Save creature configuration to csv"""
-        with open("../parameters/" + self.name.lower() + "_parameters.csv", "w") as f:
+        if cluster:
+            filename = self.name.lower()+"_parameters.csv"
+        else:
+            filename = "../parameters/" + self.name.lower() + "_parameters.csv"
+        with open(filename, "w") as f:
             csvwrite = csv.writer(f)
             for i in Creature.keys:
                 csvwrite.writerow([i, self.__dict__[i]])
@@ -537,7 +545,7 @@ def optimise(creature, obstacle, N, seed=0, fixation=10, moving=False, gradient=
 import time
 
 
-def optimise_timely(creature, obstacle, N, seed=0, run_time=10, moving=False):
+def optimise_timely(creature, obstacle, N, seed=0, run_time=10, moving=False, cluster = False):
     """Mutate and select input creature in psuedo-population of size N
     until wild type becomes fixed over fixation number of generations"""
     global population_size
@@ -575,8 +583,11 @@ def optimise_timely(creature, obstacle, N, seed=0, run_time=10, moving=False):
     creature.survival_var = survival_time[1]
     creature.evolved_in = obstacle.gradient
 
-    time_log.to_csv("../results/" + creature.name + "_times.csv")  # Save timelog to csv
-    creature.save()  # save parameters
+    if cluster:
+        time_log.to_csv(creature.name + "_times.csv")  # Save timelog to csv
+    else:
+        time_log.to_csv("../results/" + creature.name + "_times.csv")  # Save timelog to csv
+    creature.save(cluster= cluster)  # save parameters
     return 1
 
 

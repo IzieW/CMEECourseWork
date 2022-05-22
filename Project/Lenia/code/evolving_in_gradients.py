@@ -49,7 +49,11 @@ def sort_data(i):
                 theta.append(v)
         theta.append(m)
         theta.append(["gradient", gradient])
-        with open("parameters/gradient_runs/orbiumt4200n1r60_gradient"+gradient+"_parameters.csv", "w") as f:
+        theta = pd.DataFrame(theta)
+        theta = theta.transpose()
+        theta = np.asarray(theta)
+
+        with open("parameters/gradient_runs2/orbiumt4200n1r60_gradient"+gradient+"_parameters.csv", "w") as f:
             csvwrite = csv.writer(f)
             for row in theta:
                 csvwrite.writerow(row)
