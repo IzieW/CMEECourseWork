@@ -72,3 +72,7 @@ def sort_times(i):
             for row in theta:
                 csvwrite.writerow(row)
 
+
+
+##### GRADIENT PLAY #####
+o =

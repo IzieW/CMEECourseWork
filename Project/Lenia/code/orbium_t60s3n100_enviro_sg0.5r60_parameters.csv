@@ -1,0 +1,9 @@
+R,14.540685930611492
+T,10.0
+m,0.12349452513196559
+s,0.015
+b,[1.0]
+mutations,1
+gradient,0.5
+survival_mean,2.0
+survival_var,2.0
