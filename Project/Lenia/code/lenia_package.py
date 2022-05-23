@@ -109,7 +109,7 @@ class Creature:
 
         self.initiate()  # load A
 
-    def figure_world(A, cmap="viridis"):
+    def figure_world(A, cmap="gist_ncar"):
         """Set up basic graphics of unpopulated, unsized world"""
         global img  # make final image global
         fig = plt.figure()  # Initiate figure
@@ -596,7 +596,7 @@ def get_survival_time(creature, obstacle, runs=10, summary=False, verbose=False)
     """Calculate average run time over seeded 10 configurations.
     Return mean and variance."""
     times = np.zeros(runs)
-    for i in range(1, runs):
+    for i in range(1, runs+1):
         creature.initiate()  # Reset grid
         obstacle.initiate(seed=i)  # set obstacle
         times[i - 1] = run_one(creature, obstacle, verbose=verbose)

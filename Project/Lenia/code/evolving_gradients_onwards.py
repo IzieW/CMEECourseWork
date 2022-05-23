@@ -14,4 +14,18 @@ from lenia_package import *
 """Trial intense gradients (ie. the not very diffuse gradients which were too harsh for creatures
 to even live in) with a lower all around negative growth peak"""
 
-Obstacle
+## EXPLORING THE RIGHT COMBINATION OF PEAKS AND GRADIENTS
+
+"""times = []
+orbium = Creature("orbium")
+p = 1
+for i in range(10): # gradient 1
+    o = ObstacleChannel(n=1, r=60, gradient=1, peak = p)
+    p = p/2  # half each time
+    times.append(tuple(get_survival_time(orbium, o, summary=True)))"""
+## Until peak is <0.1, not much better odds of survival
+
+orbium = Creature("orbium")
+obstacle = ObstacleChannel(n=1, r=60, gradient=1, peak = 0.015)
+
+optimise(orbium, obstacle, fixation = 15, N=100)
