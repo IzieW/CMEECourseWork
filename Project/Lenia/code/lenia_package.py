@@ -109,7 +109,7 @@ class Creature:
 
         self.initiate()  # load A
 
-    def figure_world(A, cmap="gist_ncar"):
+    def figure_world(A, cmap="viridis"):
         """Set up basic graphics of unpopulated, unsized world"""
         global img  # make final image global
         fig = plt.figure()  # Initiate figure
