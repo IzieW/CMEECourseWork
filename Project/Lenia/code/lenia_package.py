@@ -73,6 +73,7 @@ class Creature:
         """Initiate creature from parameters filename, or if file is false, load dictionary"""
         if filename:
             dict = {}
+            name = deepcopy(filename)
             # Load parameters #
             if cluster:
                 filename = filename.lower()+"_parameters.csv"
@@ -85,7 +86,7 @@ class Creature:
                         dict[row[0]] = [float(i) for i in row[1].strip("[]").split(",")]
                     else:
                         dict[row[0]] = float(row[1])
-            self.name = filename
+            self.name = name
         else:
             self.name = dict["orbium"]
         self.cells = Creature.species_cells[species]  # Cells only
@@ -253,7 +254,7 @@ class Creature:
                 else:
                     anim = animation.FuncAnimation(fig, self.update_obstacle, frames=200, interval=20)
                     anim.save("../results/" + self.name + "_anim.gif", writer="imagemagick")
-                # print("Process complete.")
+                print("Process complete.")
         else:
             fig = Creature.figure_world(self.A)
             print("Rendering animation...")
@@ -293,7 +294,7 @@ class Creature:
 
 
 class ObstacleChannel:
-    def __init__(self, n=3, r=5, seed=0, dir="up", gradient=0, peak=1):
+    def __init__(self, n=3, r=5, seed=0, dir="up", gradient=0, peak=1, wrap=True):
         """Defines obstacle environment.
         n = number of obstacles per QUARTER of grid
         r = obstacle radius
@@ -306,6 +307,7 @@ class ObstacleChannel:
         self.gradient = gradient
         self.grid = 0
         self.peak = peak  # max value in obstacle grid
+        self.wrap = wrap
 
         self.direction = dir
         directions = {"up": (0, 1), "down": (2, 1), "left": (1, 0), "right": (1, 2)}
@@ -347,7 +349,11 @@ class ObstacleChannel:
         o[np.random.randint(0, len(o), self.n)] = 1
         o.shape = [size, size]
         # Convolve by kernel shape
-        self.grid = convolve2d(o, self.kernel, mode="same", boundary="wrap") * self.peak
+        if self.wrap:
+            self.grid = convolve2d(o, self.kernel, mode="same", boundary="wrap") * self.peak
+        else:
+            self.grid = convolve2d(o, self.kernel, mode="same") * self.peak
+
 
     def initiate_equal(self, seed=0):
         if seed:
