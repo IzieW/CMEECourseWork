@@ -68,7 +68,7 @@ class Creature:
                                  0],
                                 [0, 0, 0, 0, 0, 0, 0, 0, 0.02, 0.06, 0.08, 0.09, 0.07, 0.05, 0.01, 0, 0, 0, 0, 0]]}
 
-    def __init__(self, filename, dict=0, species="orbium", cluster=False, cx =20, cy=20, dir=0):
+    def __init__(self, filename, dict=0, species="orbium", cluster=False, cx =20, cy=20, dir=0, n=1):
         """Initiate creature from parameters filename, or if file is false, load dictionary"""
         if filename:
             dict = {}
@@ -100,6 +100,7 @@ class Creature:
 
         self.mutations = 0
         self.evolved_in = 0
+        self.n = n
 
         if dir:
             for i in range(dir):
@@ -179,12 +180,21 @@ class Creature:
     def initiate(self, size=size, show=False):
         """Initiate learning channel with creature cell configurations"""
         A = np.zeros([size, size])
-        A[self.cx, self.cy] = 1
-        A = convolve2d(A, self.cells, mode="same", boundary="wrap")
-        #A[self.cx:self.cx + C.shape[0], self.cy:self.cy + C.shape[1]] = C  # load cell configuration onto grid
-        if show:
-            plt.matshow(A)
-        self.A = A
+        new_A = deepcopy(A)
+        if self.n > 1:  # if multiple orbium
+            for i in range(self.n):
+                temp = deepcopy(A)
+                temp[np.random.randint(64), np.random.randint(64)] = 1  # seed grid randomely for each n of orbium
+                c = self.cells
+                for i in range(np.random.randint(4)):  # Rotate cells randomely
+                    c = np.rot90(c)
+                temp = convolve2d(temp, c, mode="same", boundary="wrap")  # populate grid with lenia
+                new_A = sum([temp, new_A])
+            self.A = new_A
+        else:
+            A[self.cx, self.cy] = 1
+            A = convolve2d(A, self.cells, mode="same", boundary="wrap")  # Update grid
+            self.A = A
 
     def kernel(self, mid=mid, fourier=True, show=False):
         """ Learning kernel for parameter solution. Default fourier transformed"""
@@ -545,7 +555,7 @@ def optimise(creature, obstacle, N, seed=0, fixation=10, moving=False, gradient=
     else:
         enviro = enviro + "_solid"
 
-    creature.name = "orbium" + "_f" + str(fixation) + "_s" + str(seed) + "N" + str(N) + "_enviro_" + enviro
+    creature.name = creature.n+"_orbium" + "_f" + str(fixation) + "_s" + str(seed) + "N" + str(N) + "_enviro_" + enviro
 
     """Update survival time mean and variance by running over 10 configurations with seed"""
     print("Calculating survival means...")
