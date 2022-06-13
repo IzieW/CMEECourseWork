@@ -30,7 +30,6 @@ class Creature:
     keys = ["R", "T", "m", "s", "b"]
     size = 64
     mid = size // 2
-    cx, cy = 20, 20
 
     bell = lambda x, m, s: np.exp(-((x - m) / s) ** 2 / 2)
 
@@ -69,7 +68,7 @@ class Creature:
                                  0],
                                 [0, 0, 0, 0, 0, 0, 0, 0, 0.02, 0.06, 0.08, 0.09, 0.07, 0.05, 0.01, 0, 0, 0, 0, 0]]}
 
-    def __init__(self, filename, dict=0, species="orbium", cluster=False):
+    def __init__(self, filename, dict=0, species="orbium", cluster=False, cx =20, cy=20, dir=0):
         """Initiate creature from parameters filename, or if file is false, load dictionary"""
         if filename:
             dict = {}
@@ -96,9 +95,16 @@ class Creature:
         self.m = dict["m"]
         self.s = dict["s"]
         self.b = dict["b"]
+        self.cx = cx
+        self.cy = cy
 
         self.mutations = 0
         self.evolved_in = 0
+
+        if dir:
+            for i in range(dir):
+                self.cells = np.rot90(self.cells)
+        self.dir = dir
 
         self.survival_mean = dict["survival_mean"]  # Mean survival time in evolved environment
         self.survival_var = dict["survival_var"]  # Survival var in evolved environment
@@ -170,11 +176,12 @@ class Creature:
         if verbose:
             print(self.name + " configuration saved to parameters/")
 
-    def initiate(self, size=size, cx=cx, cy=cy, show=False):
+    def initiate(self, size=size, show=False):
         """Initiate learning channel with creature cell configurations"""
-        C = np.asarray(self.cells)  # take cells from creature
-        A = np.zeros([size, size])  # Initiate grid of dimensions size x size
-        A[cx:cx + C.shape[0], cy:cy + C.shape[1]] = C  # load cell configuration onto grid
+        A = np.zeros([size, size])
+        A[self.cx, self.cy] = 1
+        A = convolve2d(A, self.cells, mode="same", boundary="wrap")
+        #A[self.cx:self.cx + C.shape[0], self.cy:self.cy + C.shape[1]] = C  # load cell configuration onto grid
         if show:
             plt.matshow(A)
         self.A = A
@@ -252,7 +259,7 @@ class Creature:
                     IPython.display.HTML(
                         animation.FuncAnimation(fig, self.update_obstacle, frames=200, interval=20).to_jshtml())
                 else:
-                    anim = animation.FuncAnimation(fig, self.update_obstacle, frames=200, interval=20)
+                    anim = animation.FuncAnimation(fig, self.update_two, frames=200, interval=20)
                     anim.save("../results/" + self.name + "_anim.gif", writer="imagemagick")
                 print("Process complete.")
         else:
@@ -287,7 +294,7 @@ class Creature:
         self.K = muse.K
 
     def theta(self):
-        return [self.R, self.T, self.s, self.m, self.b]
+        return [self.R, self.T, self.m, self.s, self.b]
 
     def show(self):
         plt.matshow(self.A)
@@ -423,7 +430,10 @@ def update_man(creature, obstacle, moving=False, give_sums=False):
     """Update learning channel by 1/T according to values in learning channel A,
     and obstacle channel O"""
     U = np.real(np.fft.ifft2(creature.K * np.fft.fft2(creature.A)))
-    creature.A = np.clip(creature.A + 1 / creature.T * (creature.growth(U) + obstacle.growth()), 0, 1)
+    if obstacle:
+        creature.A = np.clip(creature.A + 1 / creature.T * (creature.growth(U) + obstacle.growth()), 0, 1)
+    else:
+        creature.A = np.clip(creature.A + 1 / creature.T * (creature.growth(U)), 0, 1)
     if moving:
         obstacle.move()
     if give_sums:
@@ -602,10 +612,15 @@ def get_survival_time(creature, obstacle, runs=10, summary=False, verbose=False)
     """Calculate average run time over seeded 10 configurations.
     Return mean and variance."""
     times = np.zeros(runs)
-    for i in range(1, runs+1):
-        creature.initiate()  # Reset grid
-        obstacle.initiate(seed=i)  # set obstacle
-        times[i - 1] = run_one(creature, obstacle, verbose=verbose)
+    if obstacle:
+        for i in range(1, runs+1):
+            creature.initiate()  # Reset grid
+            obstacle.initiate(seed=i)  # set obstacle
+            times[i - 1] = run_one(creature, obstacle, verbose=verbose)
+    else:
+        for i in range(1, runs+1):
+            creature.initiate()
+            times[i-1] = run_one(creature, obstacle, verbose=verbose)
 
     if summary:
         return times.mean(), times.var()
