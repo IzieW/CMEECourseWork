@@ -73,7 +73,7 @@ class Creature:
     def __init__(self, filename, dict=0, species="orbium", cluster=False, cx=20, cy=20, dir=0, n=1):
         """Initiate creature from parameters filename, or if file is false, load dictionary"""
         if filename:
-            dict = {}
+            dict = {"organism_count":None}
             name = deepcopy(filename)
             # Load parameters #
             if cluster:
