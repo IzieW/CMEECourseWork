@@ -14,6 +14,8 @@ from matplotlib import animation
 from scipy.signal import convolve2d
 from IPython.display import HTML, Image
 import IPython
+import multiprocessing as mp
+import time
 
 # Silence warnings
 np.warnings.filterwarnings("ignore", category=np.VisibleDeprecationWarning)  # Silence
@@ -68,14 +70,14 @@ class Creature:
                                  0],
                                 [0, 0, 0, 0, 0, 0, 0, 0, 0.02, 0.06, 0.08, 0.09, 0.07, 0.05, 0.01, 0, 0, 0, 0, 0]]}
 
-    def __init__(self, filename, dict=0, species="orbium", cluster=False, cx =20, cy=20, dir=0, n=1):
+    def __init__(self, filename, dict=0, species="orbium", cluster=False, cx=20, cy=20, dir=0, n=1):
         """Initiate creature from parameters filename, or if file is false, load dictionary"""
         if filename:
             dict = {}
             name = deepcopy(filename)
             # Load parameters #
             if cluster:
-                filename = filename.lower()+"_parameters.csv"
+                filename = filename + "_parameters.csv"
             else:
                 filename = "../parameters/" + filename.lower() + "_parameters.csv"
             with open(filename, "r") as f:
@@ -94,13 +96,17 @@ class Creature:
         self.T = dict["T"]
         self.m = dict["m"]
         self.s = dict["s"]
-        self.b = dict["b"]
+        self.b = dict["b"][0]
         self.cx = cx
         self.cy = cy
 
+        if dict["organism_count"]:
+            self.n=int(dict["organism_count"])
+        else:
+            self.n = int(n)
+
         self.mutations = 0
         self.evolved_in = 0
-        self.n = n
 
         if dir:
             for i in range(dir):
@@ -163,7 +169,7 @@ class Creature:
     def save(self, verbose=True, cluster=False):
         """Save creature configuration to csv"""
         if cluster:
-            filename = self.name.lower()+"_parameters.csv"
+            filename = self.name.lower() + "_parameters.csv"
         else:
             filename = "../parameters/" + self.name.lower() + "_parameters.csv"
         with open(filename, "w") as f:
@@ -174,6 +180,7 @@ class Creature:
             csvwrite.writerow(["gradient", self.evolved_in])
             csvwrite.writerow(["survival_mean", self.survival_mean])
             csvwrite.writerow(["survival_var", self.survival_var])
+            csvwrite.writerow(["organism_count", self.n])
         if verbose:
             print(self.name + " configuration saved to parameters/")
 
@@ -269,7 +276,7 @@ class Creature:
                     IPython.display.HTML(
                         animation.FuncAnimation(fig, self.update_obstacle, frames=200, interval=20).to_jshtml())
                 else:
-                    anim = animation.FuncAnimation(fig, self.update_two, frames=200, interval=20)
+                    anim = animation.FuncAnimation(fig, self.update_naive, frames=200, interval=20)
                     anim.save("../results/" + self.name + "_anim.gif", writer="imagemagick")
                 print("Process complete.")
         else:
@@ -370,7 +377,6 @@ class ObstacleChannel:
             self.grid = convolve2d(o, self.kernel, mode="same", boundary="wrap") * self.peak
         else:
             self.grid = convolve2d(o, self.kernel, mode="same") * self.peak
-
 
     def initiate_equal(self, seed=0):
         if seed:
@@ -528,6 +534,56 @@ def mutate_and_select(creature, obstacle, moving=False, runs=100):
         return False
 
 
+def mutate_and_select_paralellized(creature, obstacle, moving=False, runs=100):
+    """Mutate one parameter from creature and assess fitness of new solution agaisnt wild type
+    in input obstacle environment. Save winning parameters to Creature.
+
+    Method involve running wild type and mutant over ten distinct obstacle environment, and
+    summing the survival time of each."""
+    wild_type = creature
+    mutant = deepcopy(creature)
+
+    ## Choose parameter at random and mutate in mutant_type
+    x = np.random.randint(0, 5)
+    mutant.__dict__[Creature.keys[x]] = mutate(mutant.__dict__[Creature.keys[x]])
+    mutant.K = mutant.kernel()  # update mutant kernel
+
+    # Run mutant and wild over runs number of obstacle configurations
+    t_wild = np.zeros(runs)
+    t_mutant = np.zeros(runs)
+
+    def run(i):
+        obstacle.initiate()  # configure environment at random
+        O = deepcopy(obstacle.grid)
+        wild_type.initiate()
+        mutant.initiate()
+        t_wild[i] = run_one(wild_type, obstacle, moving=moving)
+        if moving:
+            obstacle.grid = O  # Reset obstacle enviro if obstacles were moved
+        t_mutant[i] = run_one(mutant, obstacle, moving=moving)
+
+    pool = mp.Pool(mp.cpu_count())
+    pool.map(run, range(runs))  # run over input number of trials
+
+    # Record mean and variance of survival times
+    wild_mean = t_wild.mean()
+    print(wild_mean)
+    mutant_mean = t_mutant.mean()
+    record_time(wild_mean=wild_mean,
+                wild_var=t_wild.var(),
+                mutant_mean=mutant_mean,
+                mutant_var=t_mutant.var())
+
+    # Select winning parameter
+    if selection(wild_mean, mutant_mean):
+        print("Accept mutation")
+        creature.update_theta(mutant)  # Update creature parameters
+        return True
+    else:
+        print("Reject mutation")
+        return False
+
+
 def optimise(creature, obstacle, N, seed=0, fixation=10, moving=False, gradient=False):
     """Mutate and select input creature in psuedo-population of size N
     until wild type becomes fixed over fixation number of generations"""
@@ -555,11 +611,12 @@ def optimise(creature, obstacle, N, seed=0, fixation=10, moving=False, gradient=
     else:
         enviro = enviro + "_solid"
 
-    creature.name = creature.n+"_orbium" + "_f" + str(fixation) + "_s" + str(seed) + "N" + str(N) + "_enviro_" + enviro
+    creature.name = str(creature.n) + "_orbium" + "_f" + str(fixation) + "_s" + str(seed) + "N" + str(
+        N) + "_enviro_" + enviro
 
     """Update survival time mean and variance by running over 10 configurations with seed"""
     print("Calculating survival means...")
-    survival_time = get_survival_time(creature, obstacle)
+    survival_time = get_survival_time(creature, obstacle, summary=True)
     creature.survival_mean = survival_time[0]
     creature.survival_var = survival_time[1]
     creature.evolved_in = obstacle.__dict__
@@ -569,10 +626,7 @@ def optimise(creature, obstacle, N, seed=0, fixation=10, moving=False, gradient=
     return 1
 
 
-import time
-
-
-def optimise_timely(creature, obstacle, N, seed=0, run_time=10, moving=False, cluster = False):
+def optimise_timely(creature, obstacle, N, seed=0, run_time=10, moving=False, cluster=False):
     """Mutate and select input creature in psuedo-population of size N
     until wild type becomes fixed over fixation number of generations"""
     global population_size
@@ -600,11 +654,11 @@ def optimise_timely(creature, obstacle, N, seed=0, run_time=10, moving=False, cl
     else:
         enviro = enviro + "s"
 
-    creature.name = "orbium_t" + str(run_time) + "s" + str(seed) + "N" + str(N) + "_enviro_" + enviro
+    creature.name = str(creature.n)+"_orbium_t" + str(run_time) + "s" + str(seed) + "N" + str(N) + "_enviro_" + enviro
 
     """Update survival time mean and variance by running over 10 configurations with seed"""
     print("Calculating survival means...")
-    survival_time = get_survival_time(creature, obstacle)
+    survival_time = get_survival_time(creature, obstacle, summary=True)
     creature.mutations = mutation
     creature.survival_mean = survival_time[0]
     creature.survival_var = survival_time[1]
@@ -614,7 +668,7 @@ def optimise_timely(creature, obstacle, N, seed=0, run_time=10, moving=False, cl
         time_log.to_csv(creature.name + "_times.csv")  # Save timelog to csv
     else:
         time_log.to_csv("../results/" + creature.name + "_times.csv")  # Save timelog to csv
-    creature.save(cluster= cluster)  # save parameters
+    creature.save(cluster=cluster)  # save parameters
     return 1
 
 
@@ -623,14 +677,14 @@ def get_survival_time(creature, obstacle, runs=10, summary=False, verbose=False)
     Return mean and variance."""
     times = np.zeros(runs)
     if obstacle:
-        for i in range(1, runs+1):
+        for i in range(1, runs + 1):
             creature.initiate()  # Reset grid
             obstacle.initiate(seed=i)  # set obstacle
             times[i - 1] = run_one(creature, obstacle, verbose=verbose)
     else:
-        for i in range(1, runs+1):
+        for i in range(1, runs + 1):
             creature.initiate()
-            times[i-1] = run_one(creature, obstacle, verbose=verbose)
+            times[i - 1] = run_one(creature, obstacle, verbose=verbose)
 
     if summary:
         return times.mean(), times.var()

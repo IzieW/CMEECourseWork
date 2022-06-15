@@ -2,29 +2,18 @@
 """Evolving multiple orbium in the same arena"""
 
 # PREPARATIONS #
-from lenia_package import *  # load lenia package
+from lenia_package import *
+import os
 
-# FUNCTIONS #
-def population(n=2):
-    """return list of n number of orbium in random orientations
-    and grid space"""
-    orbiums = [Creature("orbium",
-                        cx = np.random.randint(64),
-                        cy = np.random.randint(64),
-                        dir = np.random.randint(4)) for i in range(n)]
-    return orbiums
+iter = int(os.environ.get("PBS_ARRAY_INDEX"))
 
-##### ATTEMPT 1 #####
-"""VERSION 1: EVOLVING MULTIPLE ORBIUM IN SAME ARENA
--------------------------------------------------------------
-No special updating. 
-"""
+def run_simulations(i):
+    n = np.repeat([1, 2, 3, 4, 5, 10], 3)
 
-orbium = Creature("orbium", n=2) # evolve two orbium
-obstacle = ObstacleChannel()
+    orbium = Creature("orbium", n=n[i], cluster=True)
+    obstacle = ObstacleChannel(n=5, r=8)
 
-optimise_timely(orbium, obstacle, N=100, run_time=10)
+    optimise_timely(orbium, obstacle, N=100, run_time=360, seed=i, cluster=True)
 
 
-
-
+run_simulations(iter)
