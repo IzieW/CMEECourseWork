@@ -10,8 +10,8 @@ from lenia_package import *
 
 class Food:
     def __init__(self, n=1, r=10):
-        self.n = n
-        self.r = r
+        self.n = n  # number of food blocks
+        self.r = r # Size of food blocks
         self.kernel = np.ones([r, r])
         self.grid = 0
 
@@ -33,3 +33,18 @@ class Food:
     def growth(self):
         return 0.5*self.grid
 
+#### Naive growth 1.2  #####
+"""Naive food blocks with hostile environment. Environment gradually shrinks orbium."""
+class Atmosphere:
+    def __init__(self, hostility = 0.01):
+        self.size = Creature.size
+        self.hostility = hostility # 1/1 hostility is immediate death of all cells, 0/1 hostility is neutral enviro
+        self.grid = 0
+
+        self.initiate()
+
+    def initiate(self, seed=0):
+        self.grid = -np.ones([self.size, self.size]) * self.hostility
+
+    def growth(self):
+        return self.grid

@@ -73,7 +73,7 @@ class Creature:
     def __init__(self, filename, dict=0, species="orbium", cluster=False, cx=20, cy=20, dir=0, n=1):
         """Initiate creature from parameters filename, or if file is false, load dictionary"""
         if filename:
-            dict = {"organism_count":None}
+            dict = {"organism_count": None}
             name = deepcopy(filename)
             # Load parameters #
             if cluster:
@@ -101,7 +101,7 @@ class Creature:
         self.cy = cy
 
         if dict["organism_count"]:
-            self.n=int(dict["organism_count"])
+            self.n = int(dict["organism_count"])
         else:
             self.n = int(n)
 
@@ -225,6 +225,14 @@ class Creature:
         """Obstacle growth function: Obstacle creates severe negative growth in Life form"""
         return -10 * np.maximum(0, (self.enviro - 0.001))
 
+    def update(self, i):
+        """Update creature according to any number of layered environmental grids"""
+        global img
+        U = np.real(np.fft.ifft2(self.K * np.fft.fft2(self.A)))  # Convolve by kernel to get neighbourhood sums
+        self.A = np.clip(self.A + 1/self.T * (self.growth(U) + sum([i.growth() for i in self.enviro])), 0, 1)
+        img.set_array(sum([self.A, sum([i.grid for i in self.enviro])]))
+        return img,
+
     def update_naive(self, i):
         """Update learning channel by 1/T according to values in the learning channel"""
         global img
@@ -276,7 +284,7 @@ class Creature:
                     IPython.display.HTML(
                         animation.FuncAnimation(fig, self.update_obstacle, frames=200, interval=20).to_jshtml())
                 else:
-                    anim = animation.FuncAnimation(fig, self.update_naive, frames=200, interval=20)
+                    anim = animation.FuncAnimation(fig, self.update_obstacle, frames=200, interval=20)
                     anim.save("../results/" + self.name + "_anim.gif", writer="imagemagick")
                 print("Process complete.")
         else:
@@ -289,6 +297,19 @@ class Creature:
                 anim = animation.FuncAnimation(fig, self.update_naive, frames=200, interval=20)
                 anim.save("../results/" + self.name + "_anim.gif", writer="imagemagick")
         # print("Process complete.")
+
+    def render2(self, *enviro, name=None):
+        """Render orbium in any number of layered environments"""
+        if name:
+            name = "../results/" + name + "_anim.gif"
+        else:
+            name = "../results/" + self.name + "_anim.gif"
+        print("Rendering animation...")
+        self.initiate()
+        self.enviro = enviro
+        fig = Creature.figure_world(self.A + sum([i.grid for i in enviro]))
+        anim = animation.FuncAnimation(fig, self.update, frames=200, interval=20)
+        anim.save(name, writer="imagemagick")
 
     def render_html(self, o=0):
         if type(o) != int:
@@ -453,7 +474,7 @@ def update_man(creature, obstacle, moving=False, give_sums=False):
     if moving:
         obstacle.move()
     if give_sums:
-        return np.sum(creature.A)
+        print(np.sum(creature.A))
 
 
 def selection(t_wild, t_mutant):
@@ -602,17 +623,9 @@ def optimise(creature, obstacle, N, seed=0, fixation=10, moving=False, gradient=
 
     print("Saving configuration...")
     """Save winning parameters and timelogs"""
-    if moving:
-        enviro = "moving"
-    else:
-        enviro = "static"
-    if gradient:
-        enviro = enviro + "_gradient"
-    else:
-        enviro = enviro + "_solid"
 
     creature.name = str(creature.n) + "_orbium" + "_f" + str(fixation) + "_s" + str(seed) + "N" + str(
-        N) + "_enviro_" + enviro
+        N)
 
     """Update survival time mean and variance by running over 10 configurations with seed"""
     print("Calculating survival means...")
@@ -626,7 +639,7 @@ def optimise(creature, obstacle, N, seed=0, fixation=10, moving=False, gradient=
     return 1
 
 
-def optimise_timely(creature, obstacle, N, seed=0, run_time=10, moving=False, cluster=False):
+def optimise_timely(creature, obstacle, N, seed=0, run_time=10, moving=False, cluster=False, name=None):
     """Mutate and select input creature in psuedo-population of size N
     until wild type becomes fixed over fixation number of generations"""
     global population_size
@@ -645,16 +658,12 @@ def optimise_timely(creature, obstacle, N, seed=0, run_time=10, moving=False, cl
 
     print("Saving configuration...")
     """Save winning parameters and timelogs"""
-    if moving:
-        enviro = "m"
-    else:
-        enviro = "s"
-    if obstacle.gradient:
-        enviro = enviro + "g" + str(obstacle.gradient) + "r" + str(obstacle.r)
-    else:
-        enviro = enviro + "s"
 
-    creature.name = str(creature.n)+"_orbium_t" + str(run_time) + "s" + str(seed) + "N" + str(N) + "_enviro_" + enviro
+    if name:
+        creature.name = name
+    else:
+        creature.name = str(creature.n) + "_orbium_t" + str(run_time) + "s" + str(seed) + "N" + str(
+            N)
 
     """Update survival time mean and variance by running over 10 configurations with seed"""
     print("Calculating survival means...")
@@ -662,8 +671,45 @@ def optimise_timely(creature, obstacle, N, seed=0, run_time=10, moving=False, cl
     creature.mutations = mutation
     creature.survival_mean = survival_time[0]
     creature.survival_var = survival_time[1]
-    creature.evolved_in = obstacle.gradient
+    if cluster:
+        time_log.to_csv(creature.name + "_times.csv")  # Save timelog to csv
+    else:
+        time_log.to_csv("../results/" + creature.name + "_times.csv")  # Save timelog to csv
+    creature.save(cluster=cluster)  # save parameters
+    return 1
 
+def optimise_layered(creature, obstacle, N, seed=0, run_time=10, moving=False, cluster=False, name=None):
+    """Mutate and select input creature in psuedo-population of size N
+    until wild type becomes fixed over fixation number of generations"""
+    global population_size
+    population_size = N
+    np.random.seed(seed)  # set seed
+
+    run_time = run_time * 60  # Translate to seconds
+    """Evolve until parameters become fixed over fixation number of generations"""
+    gen = 0  # time_count
+    mutation = 0
+    start = time.time()
+    while (time.time() - start) < run_time:
+        if mutate_and_select(creature, obstacle, moving=moving):  # Updates creature values
+            mutation += 1
+        gen += 1
+
+    print("Saving configuration...")
+    """Save winning parameters and timelogs"""
+
+    if name:
+        creature.name = name
+    else:
+        creature.name = str(creature.n) + "_orbium_t" + str(run_time) + "s" + str(seed) + "N" + str(
+            N)
+
+    """Update survival time mean and variance by running over 10 configurations with seed"""
+    print("Calculating survival means...")
+    survival_time = get_survival_time(creature, obstacle, summary=True)
+    creature.mutations = mutation
+    creature.survival_mean = survival_time[0]
+    creature.survival_var = survival_time[1]
     if cluster:
         time_log.to_csv(creature.name + "_times.csv")  # Save timelog to csv
     else:
@@ -672,7 +718,7 @@ def optimise_timely(creature, obstacle, N, seed=0, run_time=10, moving=False, cl
     return 1
 
 
-def get_survival_time(creature, obstacle, runs=10, summary=False, verbose=False):
+def get_survival_time(creature, obstacle=None, runs=10, summary=False, verbose=False):
     """Calculate average run time over seeded 10 configurations.
     Return mean and variance."""
     times = np.zeros(runs)
