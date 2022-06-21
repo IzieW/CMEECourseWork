@@ -1,0 +1,15 @@
+,R,T,m,s,b,mutations,gradient,survival_mean,survival_var,organism_count,pop_size,seed,hostility,foods,filename
+1,12,16,0,0,0,18,0,285,17910,1,100,8,0.55,6,naive_food_s8_n100_foods_6hostility0.55_parameters.csv
+1,7,13,0,0,1,15,0,2028,15888196,1,100,0,0.5,6,naive_food_s7_n100_foods_6hostility0.50_parameters.csv
+1,15,11,0,0,1,10,0,1378,9256422,1,100,12,0.75,6,naive_food_s12_n100_foods_6hostility0.7500000000000002_parameters.csv
+1,9,12,0,0,1,25,0,1028,8945204,1,100,10,0.5,3,naive_food_s0_n100_foods_3hostility0.50_parameters.csv
+1,13,11,0,0,1,7,0,38,2264,1,100,7,0.65,6,naive_food_s10_n100_foods_6hostility0.6500000000000001_parameters.csv
+1,13,10,0,0,1,14,0,1865,13876621,1,100,3,0.65,3,naive_food_s3_n100_foods_3hostility0.6500000000000001_parameters.csv
+1,11,13,0,0,0,18,0,274,24239,1,100,1,0.55,3,naive_food_s1_n100_foods_3hostility0.55_parameters.csv
+1,9,11,0,0,0,25,0,3195,19848733,1,100,4,0.7,3,naive_food_s4_n100_foods_3hostility0.7000000000000002_parameters.csv
+1,9,10,0,0,1,14,0,2008,15964819,1,100,13,0.8,6,naive_food_s13_n100_foods_6hostility0.8000000000000003_parameters.csv
+1,11,14,0,0,1,14,0,547,175658,1,100,2,0.6,3,naive_food_s2_n100_foods_3hostility0.6000000000000001_parameters.csv
+1,11,13,0,0,1,10,0,1906,7757002,1,100,5,0.75,3,naive_food_s5_n100_foods_3hostility0.7500000000000002_parameters.csv
+1,9,14,0,0,0,15,0,4095,23240947,1,100,9,0.6,6,naive_food_s9_n100_foods_6hostility0.6000000000000001_parameters.csv
+1,9,8,0,0,1,20,0,2021,15915712,1,100,11,0.7,6,naive_food_s11_n100_foods_6hostility0.7000000000000002_parameters.csv
+1,9,10,0,0,1,11,0,2011,15955231,1,100,6,0.8,3,naive_food_s6_n100_foods_3hostility0.8000000000000003_parameters.csv

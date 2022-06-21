@@ -70,7 +70,7 @@ class Creature:
                                  0],
                                 [0, 0, 0, 0, 0, 0, 0, 0, 0.02, 0.06, 0.08, 0.09, 0.07, 0.05, 0.01, 0, 0, 0, 0, 0]]}
 
-    def __init__(self, filename, dict=0, species="orbium", cluster=False, cx=20, cy=20, dir=0, n=1):
+    def __init__(self, filename, dict=0, species="orbium", cluster=False, cx=20, cy=20, dir=0, n=1, injury_threshold = 10):
         """Initiate creature from parameters filename, or if file is false, load dictionary"""
         if filename:
             dict = {"organism_count": None}
@@ -100,6 +100,8 @@ class Creature:
         self.cx = cx
         self.cy = cy
 
+        self.injury = 0
+
         if dict["organism_count"]:
             self.n = int(dict["organism_count"])
         else:
@@ -120,6 +122,8 @@ class Creature:
         self.K = self.kernel()
         self.enviro = 0  # Load and temporarily hold obstacle channels
         self.enviro_kernel = 0  # Load and temporarily hold obstacle kernels
+
+        self.injury_threshold = injury_threshold
 
         self.initiate()  # load A
 
@@ -203,6 +207,8 @@ class Creature:
             A = convolve2d(A, self.cells, mode="same", boundary="wrap")  # Update grid
             self.A = A
 
+        self.injury = 0
+
     def kernel(self, mid=mid, fourier=True, show=False):
         """ Learning kernel for parameter solution. Default fourier transformed"""
         D = np.linalg.norm(np.ogrid[-mid:mid, -mid:mid]) / self.R  # define distance matrix
@@ -229,9 +235,20 @@ class Creature:
         """Update creature according to any number of layered environmental grids"""
         global img
         U = np.real(np.fft.ifft2(self.K * np.fft.fft2(self.A)))  # Convolve by kernel to get neighbourhood sums
-        self.A = np.clip(self.A + 1/self.T * (self.growth(U) + sum([i.growth() for i in self.enviro])), 0, 1)
+        self.A = np.clip(self.A + 1 / self.T * (self.growth(U) + sum([i.growth() for i in self.enviro])), 0, 1)
         img.set_array(sum([self.A, sum([i.grid for i in self.enviro])]))
         return img,
+
+    def update_killer_obstacle(self, i):
+        global img
+        U = np.real(np.fft.ifft2(self.K * np.fft.fft2(self.A)))  # Convolve by kernel to get neighbourhood sums
+        self.A = np.clip(self.A + 1 / self.T * self.growth(U), 0, 1)
+        self.enviro.growth(self)
+
+        if self.injury > 10:
+            self.A = np.zeros([self.size, self.size])
+
+        img.set_array(sum([self.A, self.enviro.grid]))
 
     def update_naive(self, i):
         """Update learning channel by 1/T according to values in the learning channel"""
@@ -309,6 +326,19 @@ class Creature:
         self.enviro = enviro
         fig = Creature.figure_world(self.A + sum([i.grid for i in enviro]))
         anim = animation.FuncAnimation(fig, self.update, frames=200, interval=20)
+        anim.save(name, writer="imagemagick")
+
+    def render_killer_ob(self, obstacle, name=None):
+        """Render orbium in any number of layered environments"""
+        if name:
+            name = "../results/" + name + "_anim.gif"
+        else:
+            name = "../results/" + self.name + "_anim.gif"
+        print("Rendering animation...")
+        self.initiate()
+        self.enviro = obstacle
+        fig = Creature.figure_world(self.A + obstacle.grid)
+        anim = animation.FuncAnimation(fig, self.update_killer_obstacle, frames=200, interval=20)
         anim.save(name, writer="imagemagick")
 
     def render_html(self, o=0):
@@ -463,16 +493,15 @@ def prob_fixation(wild_time, mutant_time, N):
         return 1 / N
 
 
-def update_man(creature, obstacle, moving=False, give_sums=False):
+def update_man(creature, enviro, moving=False, give_sums=False):
     """Update learning channel by 1/T according to values in learning channel A,
     and obstacle channel O"""
     U = np.real(np.fft.ifft2(creature.K * np.fft.fft2(creature.A)))
-    if obstacle:
-        creature.A = np.clip(creature.A + 1 / creature.T * (creature.growth(U) + obstacle.growth()), 0, 1)
+    if enviro:
+        creature.A = np.clip(creature.A + 1 / creature.T * (creature.growth(U) + sum([e.growth() for e in enviro])), 0,
+                             1)
     else:
         creature.A = np.clip(creature.A + 1 / creature.T * (creature.growth(U)), 0, 1)
-    if moving:
-        obstacle.move()
     if give_sums:
         print(np.sum(creature.A))
 
@@ -489,7 +518,7 @@ def selection(t_wild, t_mutant):
         return False
 
 
-def run_one(creature, obstacle, show_after=0, moving=False, verbose=True, give_sums=False):
+def run_one(creature, enviro, show_after=0, moving=False, verbose=True, give_sums=False):
     """Run creature of given parameters in given obstacle configuration until it dies.
     Show after specifies number of timesteps at when it will show what the grid looks like"""
     t = 0  # set timer
@@ -501,15 +530,15 @@ def run_one(creature, obstacle, show_after=0, moving=False, verbose=True, give_s
         if verbose & (t % 1000 == 0):
             print(t)  # Show that it is working even after long waits
         if give_sums:
-            sums[t - 1] = update_man(creature, obstacle, moving=moving, give_sums=True)
+            sums[t - 1] = update_man(creature, enviro, moving=moving, give_sums=True)
         else:
-            update_man(creature, obstacle, moving=moving)  # Run update and show
+            update_man(creature, enviro, moving=moving)  # Run update and show
         # if t == show_after:
         #   plt.matshow(sum([creature.A, obstacle.grid]))
     return t
 
 
-def mutate_and_select(creature, obstacle, moving=False, runs=100):
+def mutate_and_select(creature, enviro, moving=False, runs=100):
     """Mutate one parameter from creature and assess fitness of new solution agaisnt wild type
     in input obstacle environment. Save winning parameters to Creature.
 
@@ -519,7 +548,7 @@ def mutate_and_select(creature, obstacle, moving=False, runs=100):
     mutant = deepcopy(creature)
 
     ## Choose parameter at random and mutate in mutant_type
-    x = np.random.randint(0, 5)
+    x = np.random.randint(0, 4)
     mutant.__dict__[Creature.keys[x]] = mutate(mutant.__dict__[Creature.keys[x]])
     mutant.K = mutant.kernel()  # update mutant kernel
 
@@ -527,64 +556,11 @@ def mutate_and_select(creature, obstacle, moving=False, runs=100):
     t_wild = np.zeros(runs)
     t_mutant = np.zeros(runs)
     for i in range(runs):
-        obstacle.initiate()  # configure environment at random
-        O = deepcopy(obstacle.grid)
+        for e in enviro: e.initiate()  # configure environments
         wild_type.initiate()
         mutant.initiate()
-        t_wild[i] = run_one(wild_type, obstacle, moving=moving)
-        if moving:
-            obstacle.grid = O  # Reset obstacle enviro if obstacles were moved
-        t_mutant[i] = run_one(mutant, obstacle, moving=moving)
-
-    # Record mean and variance of survival times
-    wild_mean = t_wild.mean()
-    print(wild_mean)
-    mutant_mean = t_mutant.mean()
-    record_time(wild_mean=wild_mean,
-                wild_var=t_wild.var(),
-                mutant_mean=mutant_mean,
-                mutant_var=t_mutant.var())
-
-    # Select winning parameter
-    if selection(wild_mean, mutant_mean):
-        print("Accept mutation")
-        creature.update_theta(mutant)  # Update creature parameters
-        return True
-    else:
-        print("Reject mutation")
-        return False
-
-
-def mutate_and_select_paralellized(creature, obstacle, moving=False, runs=100):
-    """Mutate one parameter from creature and assess fitness of new solution agaisnt wild type
-    in input obstacle environment. Save winning parameters to Creature.
-
-    Method involve running wild type and mutant over ten distinct obstacle environment, and
-    summing the survival time of each."""
-    wild_type = creature
-    mutant = deepcopy(creature)
-
-    ## Choose parameter at random and mutate in mutant_type
-    x = np.random.randint(0, 5)
-    mutant.__dict__[Creature.keys[x]] = mutate(mutant.__dict__[Creature.keys[x]])
-    mutant.K = mutant.kernel()  # update mutant kernel
-
-    # Run mutant and wild over runs number of obstacle configurations
-    t_wild = np.zeros(runs)
-    t_mutant = np.zeros(runs)
-
-    def run(i):
-        obstacle.initiate()  # configure environment at random
-        O = deepcopy(obstacle.grid)
-        wild_type.initiate()
-        mutant.initiate()
-        t_wild[i] = run_one(wild_type, obstacle, moving=moving)
-        if moving:
-            obstacle.grid = O  # Reset obstacle enviro if obstacles were moved
-        t_mutant[i] = run_one(mutant, obstacle, moving=moving)
-
-    pool = mp.Pool(mp.cpu_count())
-    pool.map(run, range(runs))  # run over input number of trials
+        t_wild[i] = run_one(wild_type, enviro, moving=moving)
+        t_mutant[i] = run_one(mutant, enviro, moving=moving)
 
     # Record mean and variance of survival times
     wild_mean = t_wild.mean()
@@ -675,15 +651,21 @@ def optimise_timely(creature, obstacle, N, seed=0, run_time=10, moving=False, cl
         time_log.to_csv(creature.name + "_times.csv")  # Save timelog to csv
     else:
         time_log.to_csv("../results/" + creature.name + "_times.csv")  # Save timelog to csv
+
+
     creature.save(cluster=cluster)  # save parameters
     return 1
 
-def optimise_layered(creature, obstacle, N, seed=0, run_time=10, moving=False, cluster=False, name=None):
+
+def optimise_layered(creature, enviro, N, seed=0, run_time=10, moving=False, cluster=False, name=None):
     """Mutate and select input creature in psuedo-population of size N
     until wild type becomes fixed over fixation number of generations"""
     global population_size
     population_size = N
     np.random.seed(seed)  # set seed
+
+    if not enviro:
+        print("WARNING: No environment specified.")
 
     run_time = run_time * 60  # Translate to seconds
     """Evolve until parameters become fixed over fixation number of generations"""
@@ -691,7 +673,7 @@ def optimise_layered(creature, obstacle, N, seed=0, run_time=10, moving=False, c
     mutation = 0
     start = time.time()
     while (time.time() - start) < run_time:
-        if mutate_and_select(creature, obstacle, moving=moving):  # Updates creature values
+        if mutate_and_select(creature, enviro, moving=moving):  # Updates creature values
             mutation += 1
         gen += 1
 
@@ -706,7 +688,7 @@ def optimise_layered(creature, obstacle, N, seed=0, run_time=10, moving=False, c
 
     """Update survival time mean and variance by running over 10 configurations with seed"""
     print("Calculating survival means...")
-    survival_time = get_survival_time(creature, obstacle, summary=True)
+    survival_time = get_survival_time(creature, enviro, summary=True)
     creature.mutations = mutation
     creature.survival_mean = survival_time[0]
     creature.survival_var = survival_time[1]
@@ -725,7 +707,7 @@ def get_survival_time(creature, obstacle=None, runs=10, summary=False, verbose=F
     if obstacle:
         for i in range(1, runs + 1):
             creature.initiate()  # Reset grid
-            obstacle.initiate(seed=i)  # set obstacle
+            for o in obstacle: o.initiate(seed=i)  # set obstacle
             times[i - 1] = run_one(creature, obstacle, verbose=verbose)
     else:
         for i in range(1, runs + 1):

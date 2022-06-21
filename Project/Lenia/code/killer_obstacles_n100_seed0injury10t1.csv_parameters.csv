@@ -5,6 +5,6 @@ s,0.015
 b,1.0
 mutations,0
 gradient,0
-survival_mean,212.0
-survival_var,17030.2
+survival_mean,41.4
+survival_var,1004.24
 organism_count,1
