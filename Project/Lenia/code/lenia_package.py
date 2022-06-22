@@ -365,7 +365,10 @@ class Creature:
         return [self.R, self.T, self.m, self.s, self.b]
 
     def show(self):
-        plt.matshow(self.A)
+        if self.enviro:
+            plt.matshow(sum([self.A, self.enviro.grid]))
+        else:
+            plt.matshow(self.A)
 
 
 class ObstacleChannel:

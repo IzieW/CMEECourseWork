@@ -1,7 +1,7 @@
 # !/usr/bin/env python3
 """Script to read in and organise data from optimisation runs"""
-
 from lenia_package import *
+from distributed_equilibrium import *
 import re
 import os
 
@@ -14,10 +14,10 @@ def get_files(path):
 
 def get_seed(file):
     """Return seed from input filename"""
-    return int(re.search(r"s\d*", file).group().split("s")[1])
+    return int(re.search(r"seed\d*", file).group().split("seed")[1])
 
 def get_food(file):
-    return int(re.search(r"foods_\d*", file).group().split("foods_")[1])
+    return int(re.search(r"food\d*", file).group().split("food")[1])
 
 def get_hostility(file):
     return float(re.search(r"hostility\d\.\d\d", file).group().split("hostility")[1])
@@ -53,7 +53,7 @@ def load_vitals(path):
 
         df = pd.concat([df, temp])
 
-    return df.astype("int64")
+    return df.astype("float64")
 
 
 def snap_shot(file, *enviro, shot = 0.5):
@@ -73,3 +73,31 @@ def load_file(files, food, hostility):
     for i in files:
         if (get_food(i) == food) and (get_hostility(i) == hostility):
             return i.split("_parameters.csv")[1]
+
+
+def load_all(directory):
+    """Load all orbium into list"""
+    files = os.listdir(directory)
+    files = [i for i in files if re.search(r"parameters.csv$", i)]
+    organisms = []
+    for i in files:
+        food = get_food(i)
+        orbium = Creature(directory+i.split("_parameters.csv")[0], cluster=True)
+        orbium.enviro = Food(n=food)
+        organisms.append(orbium)
+
+    return organisms
+
+def load_creature(directory, seed):
+    """Search properties in organisms"""
+    files = os.listdir(directory)
+    files = [i for i in files if re.search(r"parameters.csv$", i)]
+    i=0
+    while get_seed(files[i]) != seed:
+        i+=1
+
+    orbium = Creature(directory+files[i].split("_parameters.csv")[0], cluster=True)
+    food = get_food(files[i])
+    orbium.enviro = Food(n=food)
+
+    return orbium
