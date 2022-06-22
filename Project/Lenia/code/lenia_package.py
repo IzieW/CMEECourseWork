@@ -96,7 +96,7 @@ class Creature:
         self.T = dict["T"]
         self.m = dict["m"]
         self.s = dict["s"]
-        self.b = dict["b"][0]
+        self.b = np.asarray(dict["b"])
         self.cx = cx
         self.cy = cy
 
@@ -211,10 +211,10 @@ class Creature:
 
     def kernel(self, mid=mid, fourier=True, show=False):
         """ Learning kernel for parameter solution. Default fourier transformed"""
-        D = np.linalg.norm(np.ogrid[-mid:mid, -mid:mid]) / self.R  # define distance matrix
+        D = np.linalg.norm(np.ogrid[-mid:mid, -mid:mid]) / self.R * len(self.b) # define distance matrix
         """Take all cells within distance 1 and transform along gaussian gradient. 
         Produces a smooth ring-shaped kernel"""
-        K = (D < 1) * Creature.bell(D, 0.5, 0.15)
+        K = (D < len(self.b)) * self.b[np.minimum(D.astype(int), len(self.b)-1)]* Creature.bell(D%1, 0.5, 0.15)
         K = K / np.sum(K)  # normalise
         if show:
             plt.matshow(K)
